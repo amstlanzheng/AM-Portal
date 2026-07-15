@@ -1,0 +1,28 @@
+.idea
+*.iml
+*.ipr
+*.iws
+*.log
+*.logs
+.project
+.classpath
+.flattened-pom.xml
+
+# Maven
+**/target/
+
+# Node
+node_modules/
+dist/
+
+# IDE
+.trae
+.vscode/
+
+# 敏感配置文件 - 包含密码和密钥，禁止提交
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
