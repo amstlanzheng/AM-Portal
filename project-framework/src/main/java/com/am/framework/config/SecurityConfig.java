@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
                         // 管理接口
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
                         // 其他需要认证
                         .anyRequest().authenticated()
                 )

@@ -16,6 +16,9 @@ export const listUsers = (params: any) => request.get('/users/admin/list', { par
 export const approveUser = (id: number) => request.put(`/users/admin/${id}/approve`)
 export const disableUser = (id: number) => request.put(`/users/admin/${id}/disable`)
 export const setAdmin = (id: number, isAdmin: boolean) => request.put(`/users/admin/${id}/admin`, null, { params: { isAdmin } })
+export const adminChangePassword = (id: number, data: { newPassword: string }) => request.put(`/users/admin/${id}/password`, data)
+export const adminResetPassword = (id: number) => request.put(`/users/admin/${id}/password/reset`)
+export const changeMyPassword = (data: { oldPassword: string, newPassword: string }) => request.put('/users/me/password', data)
 
 // 项目
 export const listProjects = (params: any) => request.get('/projects', { params })
@@ -40,6 +43,17 @@ export const addCategory = (data: any) => request.post('/admin/blogs/categories'
 export const deleteCategory = (id: number) => request.delete(`/admin/blogs/categories/${id}`)
 export const addTag = (data: any) => request.post('/admin/blogs/tags', data)
 export const deleteTag = (id: number) => request.delete(`/admin/blogs/tags/${id}`)
+export const reviewBlog = (id: number, data: { reviewStatus: string, reviewRemark?: string }) => request.put(`/admin/blogs/${id}/review`, data)
+export const listAdminBlogs = (params: any) => request.get('/admin/blogs', { params })
+export const detectSensitiveWords = (text: string) => request.post('/admin/sensitive-words/detect', { text })
+
+// 敏感词
+export const listSensitiveWords = (params: any) => request.get('/admin/sensitive-words', { params })
+export const addSensitiveWord = (data: any) => request.post('/admin/sensitive-words', data)
+export const updateSensitiveWord = (data: any) => request.put('/admin/sensitive-words', data)
+export const deleteSensitiveWord = (id: number) => request.delete(`/admin/sensitive-words/${id}`)
+export const setSensitiveWordEnabled = (id: number, enabled: boolean) => request.put(`/admin/sensitive-words/${id}/enabled`, null, { params: { enabled } })
+export const batchAddSensitiveWords = (words: any[]) => request.post('/admin/sensitive-words/batch', words)
 
 // AI
 export const chatWithAi = (data: any) => fetch('/api/ai/chat', {

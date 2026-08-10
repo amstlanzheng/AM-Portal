@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -18,6 +19,7 @@ import org.springframework.util.StringUtils;
 public class UserService extends ServiceImpl<UserMapper, User> {
 
     private final RedisUtil redisUtil;
+    private final PasswordEncoder passwordEncoder;
 
     public Page<User> listUsers(int pageNum, int pageSize, String status, String keyword) {
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
@@ -88,5 +90,52 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         }
         user.setAvatar(avatarUrl);
         updateById(user);
+    }
+
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new BusinessException(ResultCode.OLD_PASSWORD_ERROR);
+        }
+        if (newPassword.length() < 6) {
+            throw new BusinessException(ResultCode.PASSWORD_TOO_SHORT);
+        }
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new BusinessException(ResultCode.PASSWORD_SAME);
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        updateById(user);
+        invalidateUserTokens(userId);
+    }
+
+    public void adminChangePassword(Long userId, String newPassword) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        if (newPassword.length() < 6) {
+            throw new BusinessException(ResultCode.PASSWORD_TOO_SHORT);
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        updateById(user);
+        invalidateUserTokens(userId);
+    }
+
+    public void resetPassword(Long userId) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        user.setPassword(passwordEncoder.encode(CommonConstant.INITIAL_PASSWORD));
+        updateById(user);
+        invalidateUserTokens(userId);
+    }
+
+    private void invalidateUserTokens(Long userId) {
+        redisUtil.delete(CommonConstant.REDIS_TOKEN_PREFIX + "access:" + userId);
+        redisUtil.delete(CommonConstant.REDIS_TOKEN_PREFIX + "refresh:" + userId);
     }
 }

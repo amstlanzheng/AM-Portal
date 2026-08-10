@@ -18,6 +18,9 @@
         <el-menu-item index="/admin/blogs">
           <el-icon><Document /></el-icon><span>博客管理</span>
         </el-menu-item>
+        <el-menu-item index="/admin/sensitive-words">
+          <el-icon><Warning /></el-icon><span>敏感词管理</span>
+        </el-menu-item>
         <el-menu-item index="/admin/prompts">
           <el-icon><ChatDotRound /></el-icon><span>Prompt管理</span>
         </el-menu-item>

@@ -28,6 +28,10 @@ public class Blog {
 
     private Boolean isPublished;
 
+    private String reviewStatus;
+
+    private String reviewRemark;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime publishTime;
 

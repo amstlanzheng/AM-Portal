@@ -18,7 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,7 @@ public class BlogService extends ServiceImpl<BlogMapper, Blog> {
     private final BlogCategoryMapper categoryMapper;
     private final BlogTagMapper tagMapper;
     private final BlogTagRelationMapper tagRelationMapper;
+    private final SensitiveWordService sensitiveWordService;
 
     public Page<Blog> listBlogs(int pageNum, int pageSize, Long categoryId, Long tagId, Boolean publishedOnly) {
         LambdaQueryWrapper<Blog> wrapper = new LambdaQueryWrapper<>();
@@ -139,5 +143,34 @@ public class BlogService extends ServiceImpl<BlogMapper, Blog> {
                 tagRelationMapper.insert(relation);
             }
         }
+    }
+
+    // ===== 审核管理 =====
+
+    public void reviewBlog(Long id, String reviewStatus, String reviewRemark) {
+        Blog blog = getById(id);
+        if (blog == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        blog.setReviewStatus(reviewStatus);
+        blog.setReviewRemark(reviewRemark);
+        updateById(blog);
+    }
+
+    /**
+     * 检测文本中的敏感词
+     */
+    public List<String> detectSensitiveWords(String text) {
+        List<String> words = sensitiveWordService.getAllEnabledWords();
+        List<String> found = new ArrayList<>();
+        if (text == null || text.isEmpty() || words.isEmpty()) {
+            return found;
+        }
+        for (String word : words) {
+            if (text.contains(word)) {
+                found.add(word);
+            }
+        }
+        return found;
     }
 }

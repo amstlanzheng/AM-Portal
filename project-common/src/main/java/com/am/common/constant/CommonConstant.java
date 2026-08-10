@@ -23,4 +23,6 @@ public final class CommonConstant {
     public static final String ROLE_GUEST = "GUEST";
     public static final String ROLE_USER = "USER";
     public static final String ROLE_ADMIN = "ADMIN";
+
+    public static final String INITIAL_PASSWORD = "33550336";
 }

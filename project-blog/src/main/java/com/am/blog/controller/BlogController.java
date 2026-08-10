@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "博客管理")
 @RestController
@@ -112,5 +113,21 @@ public class BlogController {
     public Result<Void> deleteTag(@PathVariable Long id) {
         blogService.deleteTag(id);
         return Result.success();
+    }
+
+    // ===== 审核管理 =====
+
+    @Operation(summary = "审核博客(管理员)")
+    @PutMapping("/admin/blogs/{id}/review")
+    public Result<Void> reviewBlog(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        blogService.reviewBlog(id, body.get("reviewStatus"), body.get("reviewRemark"));
+        return Result.success();
+    }
+
+    @Operation(summary = "检测文本敏感词")
+    @PostMapping("/admin/sensitive-words/detect")
+    public Result<List<String>> detectSensitiveWords(@RequestBody Map<String, String> body) {
+        String text = body.get("text");
+        return Result.success(blogService.detectSensitiveWords(text));
     }
 }

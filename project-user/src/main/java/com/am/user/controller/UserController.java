@@ -78,4 +78,19 @@ public class UserController {
         userService.setAdmin(userId, isAdmin);
         return Result.success();
     }
+
+    @Operation(summary = "修改用户密码(管理员)")
+    @PutMapping("/admin/{userId}/password")
+    public Result<Void> adminChangePassword(@PathVariable Long userId,
+                                            @RequestBody ChangePasswordRequest request) {
+        userService.adminChangePassword(userId, request.getNewPassword());
+        return Result.success();
+    }
+
+    @Operation(summary = "重置用户密码(管理员)")
+    @PutMapping("/admin/{userId}/password/reset")
+    public Result<Void> resetPassword(@PathVariable Long userId) {
+        userService.resetPassword(userId);
+        return Result.success();
+    }
 }

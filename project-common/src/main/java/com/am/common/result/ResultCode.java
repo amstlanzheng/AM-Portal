@@ -31,7 +31,12 @@ public enum ResultCode {
 
     // 业务相关 4xxx
     AI_NOT_AVAILABLE(4001, "AI 助手暂未开放"),
-    PROMPT_DEFAULT_CONFLICT(4002, "已存在默认 Prompt");
+    PROMPT_DEFAULT_CONFLICT(4002, "已存在默认 Prompt"),
+
+    // 密码相关 5xxx
+    OLD_PASSWORD_ERROR(5001, "旧密码错误"),
+    PASSWORD_TOO_SHORT(5002, "密码长度不能少于6位"),
+    PASSWORD_SAME(5003, "新密码不能与旧密码相同");
 
     private final int code;
     private final String message;

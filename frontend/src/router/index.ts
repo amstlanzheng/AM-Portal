@@ -25,6 +25,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'users', name: 'AdminUsers', component: () => import('../views/admin/Users.vue') },
       { path: 'projects', name: 'AdminProjects', component: () => import('../views/admin/Projects.vue') },
       { path: 'blogs', name: 'AdminBlogs', component: () => import('../views/admin/Blogs.vue') },
+      { path: 'sensitive-words', name: 'AdminSensitiveWords', component: () => import('../views/admin/SensitiveWords.vue') },
       { path: 'prompts', name: 'AdminPrompts', component: () => import('../views/admin/Prompts.vue') },
       { path: 'files', name: 'AdminFiles', component: () => import('../views/admin/Files.vue') },
       { path: 'config', name: 'AdminConfig', component: () => import('../views/admin/Config.vue') },

@@ -35,3 +35,9 @@ minio:
 spring-ai:
   openai:
     api-key: ${DEEPSEEK_API_KEY:}
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/migration-sensitive-word.sql
+      continue-on-error: true
