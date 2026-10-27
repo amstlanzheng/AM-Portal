@@ -37,13 +37,18 @@ am-portal/
 ├── project-admin/        # 后台管理聚合、仪表盘
 ├── project-api/          # 前台 API 聚合、首页数据
 ├── project-web/          # 启动模块、配置文件、SQL 脚本
-├── frontend/             # Vue3 前端项目
+├── frontend/             # Vue3 前端项目（含 Dockerfile、nginx.conf）
 ├── .env.example          # 环境变量示例
 ├── .env.local            # 环境变量（敏感，不提交）
+├── docker-compose.yml    # Docker 部署编排（仅前端 + 后端，中间件使用外部实例）
+├── Dockerfile.backend    # 后端镜像构建文件
+├── .dockerignore         # Docker 构建忽略清单
 └── pom.xml               # Maven 父 POM
 ```
 
 ## 环境要求
+
+**本地开发**：
 
 - JDK 21+
 - Maven 3.8+
@@ -51,6 +56,11 @@ am-portal/
 - MySQL 8.0+
 - Redis 6.0+
 - MinIO
+
+**Docker 部署**：
+
+- Docker 24+ / Docker Compose v2
+- 已部署好的外部中间件：MySQL 8.0+、Redis 6.0+、MinIO（容器内不会重复创建中间件）
 
 ## 快速开始
 
@@ -181,32 +191,145 @@ npm run dev
 
 完整接口文档启动后访问 `http://localhost:8080/doc.html`。
 
-## 部署
+## Docker 部署
 
-### 生产环境
+### 部署架构
 
-1. 设置环境变量（同 `.env.local` 中的变量，指向生产环境服务）
-2. 修改 `application.yml` 中 `spring.profiles.active` 为 `prod`
-3. 构建后端：`mvn clean package -DskipTests`
-4. 构建前端：`cd frontend && npm run build`
-5. 将 `frontend/dist` 部署到 Nginx，反向代理 `/api` 到后端
+项目通过 `docker-compose.yml` 只编排 **2 个容器**：
 
-### Nginx 配置示例
+| 容器 | 镜像 | 宿主机端口 | 说明 |
+|------|------|-----------|------|
+| `am-backend` | `am-portal-backend:latest` | `2888` → 8080 | Spring Boot 后端（prod profile） |
+| `am-frontend` | `am-portal-frontend:latest` | `2887` → 80 | Nginx 托管前端 + `/api` 反代后端 |
 
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
+**中间件全部使用外部已部署实例**（MySQL / Redis / MinIO），容器内不会重复创建中间件，连接地址从 `.env.local` 注入。
 
-    location / {
-        root /path/to/frontend/dist;
-        try_files $uri $uri/ /index.html;
-    }
+端口可通过 `.env.local` 中的 `WEB_PORT`（前端）和 `BACKEND_PORT`（后端）覆盖，默认 2887 / 2888。
 
-    location /api/ {
-        proxy_pass http://localhost:8080/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
+### 部署前提
+
+1. 服务器已安装 Docker 24+ 与 Docker Compose v2
+2. 已部署好外部中间件，且服务器可访问：MySQL、Redis、MinIO
+3. 外部 MySQL 已初始化数据库（见「快速开始 → 2. 初始化数据库」）
+
+### 首次部署步骤
+
+**第 1 步：上传代码到服务器**
+
+```bash
+# 服务器上拉取代码（或本地打包上传）
+git clone <仓库地址> am-portal
+cd am-portal
 ```
+
+**第 2 步：配置环境变量**
+
+```bash
+cp .env.example .env.local
+vim .env.local
+```
+
+按实际中间件地址填写（容器通过以下地址连接外部中间件）：
+
+```env
+# ---- 外部 MySQL ----
+MYSQL_HOST=<MySQL 服务器 IP>
+MYSQL_PORT=3306
+MYSQL_DATABASE=am_portal
+MYSQL_USER=root
+MYSQL_PASSWORD=<密码>
+
+# ---- 外部 Redis ----
+REDIS_HOST=<Redis 服务器 IP>
+REDIS_PORT=6379
+REDIS_PASSWORD=<密码>
+
+# ---- 外部 MinIO ----
+MINIO_ENDPOINT=http://<MinIO 地址>:9000
+MINIO_ACCESS_KEY=<AccessKey>
+MINIO_SECRET_KEY=<SecretKey>
+MINIO_BUCKET_NAME=am-portal
+
+# ---- DeepSeek ----
+DEEPSEEK_API_KEY=<API Key>
+
+# ---- 端口（可选，默认 2887 / 2888）----
+WEB_PORT=2887
+BACKEND_PORT=2888
+```
+
+> 中间件若部署在同一宿主机上且未设置 `MYSQL_HOST` 等，默认值为 `host.docker.internal`（compose 已通过 `extra_hosts` 支持该解析）。
+
+**第 3 步：构建并启动**
+
+```bash
+docker compose up -d --build
+```
+
+首次启动时后端需等待健康检查通过（`/actuator/health`），前端会在后端就绪后启动。
+
+**第 4 步：验证**
+
+```bash
+# 查看容器状态（两个容器都应为 Up，backend 为 healthy）
+docker compose ps
+
+# 查看后端启动日志
+docker compose logs -f backend
+```
+
+访问地址：
+
+| 地址 | 说明 |
+|------|------|
+| `http://<服务器IP>:2887` | 前端页面 |
+| `http://<服务器IP>:2888` | 后端 API |
+| `http://<服务器IP>:2888/doc.html` | 接口文档 |
+
+### 更新服务
+
+代码有更新时（`git pull` 之后），重新构建镜像并重启容器：
+
+```bash
+# 拉取最新代码
+git pull
+
+# 重新构建并重启全部服务
+docker compose up -d --build
+```
+
+只更新单个服务：
+
+```bash
+docker compose up -d --build backend    # 只更新后端
+docker compose up -d --build frontend   # 只更新前端
+```
+
+仅修改了 `.env.local` 配置（代码未变）：
+
+```bash
+docker compose up -d    # 重新创建容器以加载新环境变量，不会重新构建镜像
+```
+
+> 说明：`--build` 会重建镜像；镜像基于 Docker 层缓存，仅变更的层会重新构建。数据保存在外部中间件中，重启容器不会丢失业务数据。
+
+### 常用运维命令
+
+```bash
+docker compose ps                 # 查看容器状态
+docker compose logs -f backend    # 实时查看后端日志
+docker compose logs -f frontend   # 实时查看前端日志
+docker compose restart backend    # 重启后端（不重建镜像）
+docker compose stop               # 停止所有服务
+docker compose down               # 停止并移除容器（数据在外部中间件，不受影响）
+```
+
+### 常见问题排查
+
+| 现象 | 排查方式 |
+|------|---------|
+| `backend` 一直 `health: starting` 或退出 | `docker compose logs backend`，通常是连不上外部 MySQL/Redis/MinIO，检查 `.env.local` 中地址、端口、密码及网络可达性 |
+| `frontend` 未启动 | 前端依赖后端健康检查，先解决后端问题 |
+| 页面可访问但接口 502 | 检查后端容器是否存活：`docker compose ps` |
+| 端口冲突 | 修改 `.env.local` 中 `WEB_PORT` / `BACKEND_PORT` 后 `docker compose up -d` |
+| 必填环境变量未设置导致启动失败 | compose 中 `MYSQL_PASSWORD`、`REDIS_PASSWORD`、`MINIO_ACCESS_KEY`、`MINIO_SECRET_KEY` 为必填，缺失会直接报错，补全 `.env.local` 即可 |

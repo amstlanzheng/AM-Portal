@@ -1,0 +1,45 @@
+# ============================================
+# Docker 构建上下文排除清单
+# 减小构建上下文体积，加速镜像构建
+# ============================================
+
+# 版本控制
+.git
+.gitignore
+
+# Docker 自身
+Dockerfile.backend
+docker-compose.yml
+.dockerignore
+
+# 文档
+README.md
+doc/
+openspec/
+
+# 前端（由 frontend/Dockerfile 单独构建）
+frontend/node_modules
+frontend/dist
+
+# 环境变量（敏感，禁止进入镜像）
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# 构建产物
+**/target/
+**/*.class
+
+# 日志
+*.log
+logs/
+
+# 系统文件
+.DS_Store
+Thumbs.db

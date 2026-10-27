@@ -1,0 +1,54 @@
+# ============================================
+# 后端多阶段构建：Maven 构建 + JRE 运行
+# 构建上下文为项目根目录：
+#   docker build -f Dockerfile.backend -t am-portal-backend .
+# ============================================
+
+# ---------- 构建阶段 ----------
+FROM maven:3.9-eclipse-temurin-21 AS builder
+
+WORKDIR /build
+
+# 先复制 pom 文件，利用 Docker 层缓存加速依赖下载
+COPY pom.xml .
+COPY project-common/pom.xml project-common/
+COPY project-framework/pom.xml project-framework/
+COPY project-auth/pom.xml project-auth/
+COPY project-user/pom.xml project-user/
+COPY project-blog/pom.xml project-blog/
+COPY project-project/pom.xml project-project/
+COPY project-ai/pom.xml project-ai/
+COPY project-storage/pom.xml project-storage/
+COPY project-api/pom.xml project-api/
+COPY project-admin/pom.xml project-admin/
+COPY project-web/pom.xml project-web/
+
+# 预下载依赖（pom 变化少时此层直接命中缓存）
+RUN mvn dependency:go-offline -B -q || true
+
+# 复制全部源码并打包（跳过测试）
+COPY . .
+RUN mvn clean package -DskipTests -B -q \
+    && mv project-web/target/*.jar app.jar
+
+# ---------- 运行阶段 ----------
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# 创建非 root 用户运行
+RUN addgroup -S spring && adduser -S spring -G spring \
+    && chown -R spring:spring /app
+
+COPY --from=builder /build/app.jar app.jar
+
+USER spring
+
+EXPOSE 8080
+
+# 健康检查 + 容器内存感知 JVM 参数
+ENTRYPOINT ["java", \
+    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:+UseZGC", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-jar", "app.jar"]
