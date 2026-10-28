@@ -57,7 +57,11 @@ public class MinioService extends ServiceImpl<FileInfoMapper, FileInfo> {
             inputStream.close();
 
             // 获取访问 URL
-            String url = minioConfig.getEndpoint() + "/" + minioConfig.getBucketName() + "/" + objectName;
+            String publicUrl = minioConfig.getPublicUrl();
+            if (publicUrl == null || publicUrl.isBlank()) {
+                publicUrl = minioConfig.getEndpoint();
+            }
+            String url = publicUrl + "/" + minioConfig.getBucketName() + "/" + objectName;
 
             // 保存文件信息到数据库
             FileInfo fileInfo = new FileInfo();

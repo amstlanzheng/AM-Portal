@@ -44,13 +44,15 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:?请在 .env.local 设置 MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:?请在 .env.local 设置 MINIO_SECRET_KEY}
       MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-am-portal}
+      # 浏览器可访问的对外地址（如 MinIO 走宿主机端口映射时填公网地址），缺省同 MINIO_ENDPOINT
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-}
 
       # ---- DeepSeek ----
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
     ports:
       - "${BACKEND_PORT:-2888}:8080"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/home >/dev/null 2>&1 || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10
@@ -69,7 +71,12 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "${WEB_PORT:-2887}:8699"
+      - "${WEB_PORT:-2887}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       - am-net
 

@@ -15,6 +15,8 @@ public class MinioConfig {
     private String accessKey;
     private String secretKey;
     private String bucketName;
+    /** 对外访问地址（浏览器可访问），默认与 endpoint 相同 */
+    private String publicUrl;
 
     @Bean
     public MinioClient minioClient() {

@@ -48,6 +48,7 @@ minio:
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket-name: ${MINIO_BUCKET_NAME:am-portal}
+  public-url: ${MINIO_PUBLIC_URL:${MINIO_ENDPOINT:http://localhost:9000}}
 
 spring-ai:
   openai:
