@@ -2,6 +2,9 @@ import request from '../utils/request'
 
 // 首页
 export const getHomePage = () => request.get('/home')
+export const getSiteInfo = () => request.get('/home/site-info')
+export const getHomeRecentProjects = (limit: number = 5) => request.get('/home/recent-projects', { params: { limit } })
+export const getHomeRecentBlogs = (limit: number = 5) => request.get('/home/recent-blogs', { params: { limit } })
 
 // 认证
 export const login = (data: any) => request.post('/auth/login', data)

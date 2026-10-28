@@ -60,12 +60,6 @@ async function handleSave() {
 }
 
 async function handleDelete(id: number) { await ElMessageBox.confirm('确定删除？'); await deletePrompt(id); ElMessage.success('删除成功'); loadPrompts() }
-async function handleBatchDelete() {
-  await ElMessageBox.confirm(`确定删除选中的 ${selectedIds.value.length} 个 Prompt？`, '批量删除', { type: 'warning' })
-  await batchDeletePrompts(selectedIds.value)
-  ElMessage.success('批量删除成功'); selectedIds.value = []; loadPrompts()
-}
-function handleSelectionChange(rows: any[]) { selectedIds.value = rows.map(r => r.id) }
 async function handleToggleEnabled(row: any) { await setPromptEnabled(row.id, !row.isEnabled); loadPrompts() }
 async function handleSetDefault(id: number) { await setPromptDefault(id); ElMessage.success('设置成功'); loadPrompts() }
 

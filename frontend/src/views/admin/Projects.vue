@@ -23,6 +23,15 @@
     <el-dialog v-model="dialogVisible" :title="editingProject ? '编辑项目' : '新增项目'" width="600px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="名称"><el-input v-model="form.name" /></el-form-item>
+        <el-form-item label="封面">
+          <div style="display:flex;align-items:center;gap:12px">
+            <el-image v-if="form.cover" :src="form.cover" style="width:120px;height:80px;border-radius:4px" fit="cover" />
+            <el-upload :show-file-list="false" :before-upload="handleCoverUpload" accept="image/*">
+              <el-button>{{ form.cover ? '更换封面' : '上传封面' }}</el-button>
+            </el-upload>
+            <el-button v-if="form.cover" link type="danger" @click="form.cover = ''">移除</el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="简介"><el-input v-model="form.summary" type="textarea" :rows="3" /></el-form-item>
         <el-form-item label="标签"><el-input v-model="form.tags" placeholder="逗号分隔" /></el-form-item>
         <el-form-item label="Github"><el-input v-model="form.githubUrl" /></el-form-item>
@@ -39,13 +48,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { listProjects, addProject, updateProject, deleteProject, setProjectTop, setProjectVisible } from '../../api'
+import { listProjects, addProject, updateProject, deleteProject, setProjectTop, setProjectVisible, uploadFile } from '../../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const projects = ref<any[]>([])
 const dialogVisible = ref(false)
 const editingProject = ref<any>(null)
-const form = reactive({ name: '', summary: '', tags: '', githubUrl: '', giteeUrl: '', demoUrl: '', downloadUrl: '', markdownContent: '', htmlContent: '' })
+const form = reactive({ name: '', cover: '', summary: '', tags: '', githubUrl: '', giteeUrl: '', demoUrl: '', downloadUrl: '', markdownContent: '', htmlContent: '' })
 
 async function loadProjects() {
   const res: any = await listProjects({ pageNum: 1, pageSize: 100 })
@@ -58,18 +67,19 @@ function showDialog(project?: any) {
   dialogVisible.value = true
 }
 
+async function handleCoverUpload(file: File) {
+  const res: any = await uploadFile(file, 'project')
+  form.cover = res.data?.url || ''
+  ElMessage.success('封面上传成功')
+  return false
+}
+
 async function handleSave() {
   if (editingProject.value) { await updateProject({ ...form, id: editingProject.value.id }) } else { await addProject(form) }
   ElMessage.success('保存成功'); dialogVisible.value = false; loadProjects()
 }
 
 async function handleDelete(id: number) { await ElMessageBox.confirm('确定删除？'); await deleteProject(id); ElMessage.success('删除成功'); loadProjects() }
-async function handleBatchDelete() {
-  await ElMessageBox.confirm(`确定删除选中的 ${selectedIds.value.length} 个项目？`, '批量删除', { type: 'warning' })
-  await batchDeleteProjects(selectedIds.value)
-  ElMessage.success('批量删除成功'); selectedIds.value = []; loadProjects()
-}
-function handleSelectionChange(rows: any[]) { selectedIds.value = rows.map(r => r.id) }
 async function handleToggleTop(row: any) { await setProjectTop(row.id, !row.isTop); loadProjects() }
 async function handleToggleVisible(row: any) { await setProjectVisible(row.id, !row.isVisible); loadProjects() }
 

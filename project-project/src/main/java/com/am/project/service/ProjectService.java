@@ -20,7 +20,9 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
         }
         wrapper.orderByDesc(Project::getIsTop)
                .orderByDesc(Project::getPublishTime);
-        return page(new Page<>(pageNum, pageSize), wrapper);
+        Page<Project> result = page(new Page<>(pageNum, pageSize), wrapper);
+        result.getRecords().forEach(this::normalizeUrls);
+        return result;
     }
 
     public Project getProjectDetail(Long id) {
@@ -28,6 +30,7 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
         if (project == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND);
         }
+        normalizeUrls(project);
         return project;
     }
 
@@ -74,6 +77,30 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
         wrapper.eq(Project::getIsVisible, true)
                .orderByDesc(Project::getIsTop)
                .orderByDesc(Project::getPublishTime);
-        return page(new Page<>(1, limit), wrapper);
+        Page<Project> result = page(new Page<>(1, limit), wrapper);
+        result.getRecords().forEach(this::normalizeUrls);
+        return result;
+    }
+
+    /**
+     * 补全外链协议头：用户填写 github.com/xxx 这类无协议地址时，
+     * 前端直接跳转会被当作相对路径，这里统一补全为 https://
+     */
+    private void normalizeUrls(Project project) {
+        project.setGithubUrl(normalizeUrl(project.getGithubUrl()));
+        project.setGiteeUrl(normalizeUrl(project.getGiteeUrl()));
+        project.setDemoUrl(normalizeUrl(project.getDemoUrl()));
+        project.setDownloadUrl(normalizeUrl(project.getDownloadUrl()));
+    }
+
+    private String normalizeUrl(String url) {
+        if (!StringUtils.hasText(url)) {
+            return url;
+        }
+        String trimmed = url.trim();
+        if (trimmed.matches("(?i)^(https?|mailto|tel):.*")) {
+            return trimmed;
+        }
+        return "https://" + trimmed;
     }
 }

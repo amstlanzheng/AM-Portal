@@ -10,12 +10,12 @@
           <el-tag v-for="tag in (project.tags||'').split(',').filter(Boolean)" :key="tag" style="margin-right:6px">{{ tag.trim() }}</el-tag>
         </div>
         <div v-if="project.htmlContent" v-html="project.htmlContent" class="markdown-body" />
-        <div v-else-if="project.markdownContent" class="markdown-body">{{ project.markdownContent }}</div>
+        <div v-else-if="project.markdownContent" v-html="renderedMarkdown" class="markdown-body" />
         <div style="margin-top:20px;display:flex;gap:12px">
-          <el-button v-if="project.githubUrl" type="primary" @click="window.open(project.githubUrl)">GitHub</el-button>
-          <el-button v-if="project.giteeUrl" @click="window.open(project.giteeUrl)">Gitee</el-button>
-          <el-button v-if="project.demoUrl" type="success" @click="window.open(project.demoUrl)">在线体验</el-button>
-          <el-button v-if="project.downloadUrl" @click="window.open(project.downloadUrl)">下载</el-button>
+          <el-button v-if="project.githubUrl" type="primary" @click="openUrl(project.githubUrl)">GitHub</el-button>
+          <el-button v-if="project.giteeUrl" @click="openUrl(project.giteeUrl)">Gitee</el-button>
+          <el-button v-if="project.demoUrl" type="success" @click="openUrl(project.demoUrl)">在线体验</el-button>
+          <el-button v-if="project.downloadUrl" @click="openUrl(project.downloadUrl)">下载</el-button>
         </div>
       </div>
     </el-card>
@@ -23,12 +23,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { getProject } from '../api'
+import { renderMarkdown } from '../utils/markdown'
 
 const route = useRoute()
 const project = ref<any>(null)
+
+const renderedMarkdown = computed(() => renderMarkdown(project.value?.markdownContent))
+
+function openUrl(url: string) {
+  if (!url) return
+  const target = /^https?:\/\//i.test(url) ? url : 'https://' + url
+  window.open(target, '_blank')
+}
 
 onMounted(async () => {
   const res: any = await getProject(Number(route.params.id))
@@ -37,5 +46,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.markdown-body { line-height: 1.8; }
+/* 排版样式见 src/style.css 中的 .markdown-body（v-html 内容需全局样式） */
 </style>

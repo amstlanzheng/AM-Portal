@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.2.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "typescript": "~6.0.2",
     "vite": "^6.3.5",
