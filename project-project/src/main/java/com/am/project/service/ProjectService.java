@@ -95,7 +95,7 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
 
     private String normalizeUrl(String url) {
         if (!StringUtils.hasText(url)) {
-            return url;
+            return null;
         }
         String trimmed = url.trim();
         if (trimmed.matches("(?i)^(https?|mailto|tel):.*")) {
