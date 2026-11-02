@@ -1,27 +1,55 @@
 <template>
   <div class="page-container">
-    <el-card>
-      <template #header><h2>个人资料</h2></template>
-      <el-form :model="form" label-width="80px" style="max-width:500px">
-        <el-form-item label="头像">
-          <el-avatar :size="64" :src="form.avatar" />
-          <el-button style="margin-left:12px" @click="handleUploadAvatar">上传头像</el-button>
-          <input type="file" ref="fileInput" style="display:none" accept="image/*" @change="onFileChange" />
-        </el-form-item>
-        <el-form-item label="昵称"><el-input v-model="form.nickname" /></el-form-item>
-        <el-form-item label="邮箱"><el-input v-model="form.email" /></el-form-item>
-        <el-form-item label="手机"><el-input v-model="form.phone" /></el-form-item>
-        <el-form-item><el-button type="primary" @click="handleSave">保存</el-button></el-form-item>
-      </el-form>
-    </el-card>
+    <header class="page-head">
+      <div>
+        <p class="eyebrow">Account</p>
+        <h1 class="page-title">个人资料</h1>
+        <p class="page-sub">管理你的公开信息与账号安全</p>
+      </div>
+    </header>
 
-    <el-card style="margin-top:20px">
-      <template #header><h2>安全设置</h2></template>
-      <el-button type="primary" @click="openPasswordDialog">修改密码</el-button>
-    </el-card>
+    <div class="profile-grid">
+      <section class="surface panel">
+        <h2 class="panel-title">基本信息</h2>
+        <div class="avatar-row">
+          <el-avatar :size="64" :src="form.avatar" class="profile-avatar" />
+          <div class="avatar-meta">
+            <p class="avatar-name">{{ form.nickname || userStore.username || '未设置昵称' }}</p>
+            <button class="text-btn" @click="handleUploadAvatar">更换头像</button>
+            <input type="file" ref="fileInput" style="display:none" accept="image/*" @change="onFileChange" />
+          </div>
+        </div>
+
+        <el-form :model="form" label-position="top" class="profile-form">
+          <el-form-item label="昵称">
+            <el-input v-model="form.nickname" placeholder="展示在头像旁的名字" />
+          </el-form-item>
+          <el-form-item label="邮箱">
+            <el-input v-model="form.email" placeholder="用于接收通知" />
+          </el-form-item>
+          <el-form-item label="手机">
+            <el-input v-model="form.phone" placeholder="选填" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="handleSave">保存修改</el-button>
+          </el-form-item>
+        </el-form>
+      </section>
+
+      <section class="surface panel">
+        <h2 class="panel-title">安全设置</h2>
+        <div class="security-row">
+          <div>
+            <p class="security-label">登录密码</p>
+            <p class="faint">建议定期更换，长度不少于 6 位</p>
+          </div>
+          <el-button @click="openPasswordDialog">修改密码</el-button>
+        </div>
+      </section>
+    </div>
 
     <el-dialog v-model="pwdDialogVisible" title="修改密码" width="420px">
-      <el-form :model="pwdForm" :rules="pwdRules" ref="pwdFormRef" label-width="100px">
+      <el-form :model="pwdForm" :rules="pwdRules" ref="pwdFormRef" label-position="top">
         <el-form-item label="旧密码" prop="oldPassword">
           <el-input v-model="pwdForm.oldPassword" type="password" show-password />
         </el-form-item>
@@ -117,3 +145,87 @@ async function handleChangePassword() {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.panel {
+  padding: var(--space-6);
+}
+
+.panel-title {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  margin-bottom: var(--space-5);
+}
+
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-avatar {
+  border: 3px solid #fff;
+  box-shadow: var(--shadow-sm);
+  background: var(--brand-50);
+  color: var(--brand-600);
+  font-weight: 600;
+}
+
+.avatar-name {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-strong);
+  margin-bottom: 4px;
+}
+
+.text-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  color: var(--brand-600);
+  cursor: pointer;
+}
+.text-btn:hover {
+  text-decoration: underline;
+}
+
+.profile-form {
+  max-width: 460px;
+}
+
+.security-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.security-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-strong);
+  margin-bottom: 2px;
+}
+
+@media (max-width: 900px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
