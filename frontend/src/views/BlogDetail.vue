@@ -1,5 +1,6 @@
 <template>
   <div class="page-container detail">
+    <div class="reader-progress" :style="{ width: progress + '%' }"></div>
     <button class="back-link" @click="$router.back()">
       <el-icon><ArrowLeft /></el-icon> 返回
     </button>
@@ -25,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { getBlog } from '../api'
 import { renderMarkdown } from '../utils/markdown'
@@ -38,12 +39,41 @@ const renderedMarkdown = computed(() => renderMarkdown(blog.value?.markdownConte
 onMounted(async () => {
   const res: any = await getBlog(Number(route.params.id))
   blog.value = res.data
+  window.addEventListener('scroll', updateProgress, { passive: true })
+  updateProgress()
+})
+
+/* 阅读进度 */
+const progress = ref(0)
+
+function updateProgress() {
+  const el = document.querySelector('.article') as HTMLElement | null
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  const total = rect.height - window.innerHeight * 0.4
+  const scrolled = window.innerHeight * 0.15 - rect.top
+  progress.value = Math.min(100, Math.max(0, Math.round((scrolled / Math.max(1, total)) * 100)))
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', updateProgress)
 })
 </script>
 
 <style scoped>
 .detail {
   max-width: 860px;
+}
+
+.reader-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-500), var(--brand-600));
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
+  z-index: 300;
+  transition: width 0.12s linear;
 }
 
 .back-link {

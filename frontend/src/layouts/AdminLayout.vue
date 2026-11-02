@@ -18,6 +18,9 @@
         <el-menu-item index="/admin/blogs">
           <el-icon><Document /></el-icon><span>博客管理</span>
         </el-menu-item>
+        <el-menu-item index="/admin/tips">
+          <el-icon><Sunny /></el-icon><span>小贴士管理</span>
+        </el-menu-item>
         <el-menu-item index="/admin/sensitive-words">
           <el-icon><Warning /></el-icon><span>敏感词管理</span>
         </el-menu-item>

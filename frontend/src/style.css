@@ -434,10 +434,46 @@ img {
   border-radius: var(--radius-lg);
 }
 
-/* ============================================
-   Markdown / HTML 内容排版
-   注意：必须为全局样式，scoped 无法作用于 v-html 注入的节点
-   ============================================ */
+/* ---------- 滚动淡入（v-reveal） ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-distance, 16px));
+  transition: opacity 0.55s cubic-bezier(0.22, 0.68, 0.24, 1),
+    transform 0.55s cubic-bezier(0.22, 0.68, 0.24, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- 路由切换过渡 ---------- */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .page-enter-active,
+  .page-leave-active {
+    transition: none;
+  }
+}
+
+/* ---------- Markdown / HTML 内容排版 ---------- */
 .markdown-body {
   line-height: 1.85;
   font-size: var(--text-base);

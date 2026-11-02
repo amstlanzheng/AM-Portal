@@ -1,8 +1,16 @@
 <template>
   <div class="ai-chat">
-    <button class="chat-toggle" :class="{ open: visible }" @click="visible = !visible" aria-label="AI 助手">
+    <button class="chat-toggle" :class="{ open: visible }" @click="toggleChat" aria-label="AI 助手">
+      <span class="chat-pulse"></span>
+      <span class="chat-pulse delay"></span>
       <el-icon :size="24"><ChatDotRound /></el-icon>
     </button>
+
+    <transition name="bubble">
+      <div v-if="hintVisible" class="chat-hint" @click="toggleChat">
+        <span class="hint-dot"></span>有问必答，点我聊聊
+      </div>
+    </transition>
 
     <el-drawer v-model="visible" :size="drawerSize" direction="rtl" :with-header="true" class="ai-drawer">
       <template #header>
@@ -49,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { chatWithAi } from '../api'
 
 const visible = ref(false)
@@ -60,6 +68,28 @@ const messagesRef = ref<HTMLElement>()
 let msgId = 0
 
 const drawerSize = computed(() => (window.innerWidth < 640 ? '100%' : '420px'))
+
+/* 首次进入的小气泡提示 */
+const hintVisible = ref(false)
+let hintTimer: number | undefined
+
+function toggleChat() {
+  visible.value = !visible.value
+  hintVisible.value = false
+  try { sessionStorage.setItem('ai-hint-seen', '1') } catch { /* ignore */ }
+}
+
+onMounted(() => {
+  let seen = ''
+  try { seen = sessionStorage.getItem('ai-hint-seen') || '' } catch { /* ignore */ }
+  if (!seen) {
+    hintTimer = window.setTimeout(() => (hintVisible.value = true), 3500)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (hintTimer) window.clearTimeout(hintTimer)
+})
 
 async function sendMessage() {
   if (!input.value.trim() || loading.value) return
@@ -184,6 +214,82 @@ function scrollToBottom() {
 }
 .chat-toggle.open {
   transform: scale(0.94);
+}
+
+/* 呼吸光晕 */
+.chat-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(37, 99, 235, 0.45);
+  animation: chat-pulse 2.8s ease-out infinite;
+  pointer-events: none;
+}
+.chat-pulse.delay {
+  animation-delay: 1.4s;
+}
+
+@keyframes chat-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  70% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+/* 气泡提示 */
+.chat-hint {
+  position: fixed;
+  right: 28px;
+  bottom: 96px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  z-index: 999;
+  transition: all 0.2s ease;
+}
+.chat-hint:hover {
+  border-color: var(--brand-100);
+  color: var(--brand-600);
+}
+
+.hint-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-500);
+  box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
+  animation: hint-dot 1.8s ease-out infinite;
+}
+
+@keyframes hint-dot {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45); }
+  100% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+}
+
+.bubble-enter-active,
+.bubble-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.bubble-enter-from,
+.bubble-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
 }
 
 /* 抽屉头 */

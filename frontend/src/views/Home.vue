@@ -1,8 +1,13 @@
 <template>
   <div class="page-container home">
     <!-- Hero -->
-    <section class="hero surface">
-      <div class="hero-glow" aria-hidden="true"></div>
+    <section
+      ref="heroRef"
+      class="hero surface"
+      @mousemove="onHeroMove"
+      @mouseleave="onHeroLeave"
+    >
+      <div class="hero-glow" :style="glowStyle" aria-hidden="true"></div>
       <div class="hero-body">
         <el-avatar :size="88" :src="siteInfo.site_avatar" class="hero-avatar">
           {{ (siteInfo.site_title || 'AM').slice(0, 1).toUpperCase() }}
@@ -23,6 +28,23 @@
               <el-icon><Message /></el-icon> {{ siteInfo.site_email }}
             </a>
           </div>
+
+          <div class="hero-stats">
+            <div class="stat">
+              <span class="stat-num">{{ shownProjects }}</span>
+              <span class="stat-label">项目</span>
+            </div>
+            <span class="stat-sep"></span>
+            <div class="stat">
+              <span class="stat-num">{{ shownBlogs }}</span>
+              <span class="stat-label">博客</span>
+            </div>
+            <span class="stat-sep"></span>
+            <div class="stat">
+              <span class="stat-num">{{ shownTech }}</span>
+              <span class="stat-label">技术栈</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -41,18 +63,20 @@
             </div>
             <div v-else class="grid grid-3">
               <article
-                v-for="project in recentProjects"
+                v-for="(project, idx) in recentProjects"
                 :key="project.id"
+                v-reveal="idx * 70"
                 class="item-card surface card-hover"
                 @click="$router.push('/projects/' + project.id)"
               >
                 <div class="cover">
-                  <el-image v-if="project.cover" :src="project.cover" fit="cover" />
+                  <el-image v-if="project.cover" :src="project.cover" fit="cover" lazy />
                   <div v-else class="cover-placeholder">{{ (project.name || '?').slice(0, 1) }}</div>
                 </div>
                 <div class="item-body">
                   <h3 class="item-title">{{ project.name }}</h3>
                   <p class="item-desc">{{ project.summary }}</p>
+                  <p class="card-time">{{ fmtDate(project.publishTime || project.createTime) }}</p>
                 </div>
               </article>
             </div>
@@ -71,8 +95,9 @@
             </div>
             <div v-else class="blog-list">
               <article
-                v-for="blog in recentBlogs"
+                v-for="(blog, idx) in recentBlogs"
                 :key="blog.id"
+                v-reveal="idx * 60"
                 class="blog-row surface card-hover"
                 @click="$router.push('/blogs/' + blog.id)"
               >
@@ -92,7 +117,30 @@
 
       <!-- 侧栏 -->
       <aside class="home-side">
-        <section class="surface side-card">
+        <!-- 时钟 -->
+        <section v-reveal class="surface side-card now-card">
+          <div class="now-top">
+            <span class="clock-time">{{ clockTime }}</span>
+            <span class="now-greet">{{ greeting }}</span>
+          </div>
+          <p class="clock-date">{{ clockDate }}</p>
+        </section>
+
+        <!-- 小贴士 -->
+        <section v-reveal="80" class="surface side-card tip-card">
+          <div class="tip-head">
+            <h3 class="side-title">小贴士</h3>
+            <button class="tip-refresh" :class="{ spinning: tipLoading }" title="换一条" @click="loadTip">
+              <el-icon><Refresh /></el-icon>
+            </button>
+          </div>
+          <transition name="tip-fade" mode="out-in">
+            <p :key="tip" class="tip-text">{{ tip || '加载中…' }}</p>
+          </transition>
+        </section>
+
+        <!-- 技术栈 -->
+        <section v-reveal="140" class="surface side-card">
           <h3 class="side-title">技术栈</h3>
           <div v-if="techList.length" class="chip-list">
             <span v-for="tech in techList" :key="tech" class="chip">{{ tech }}</span>
@@ -100,7 +148,8 @@
           <p v-else class="faint">尚未配置</p>
         </section>
 
-        <section class="surface side-card">
+        <!-- 快速导航 -->
+        <section v-reveal="200" class="surface side-card">
           <h3 class="side-title">快速导航</h3>
           <div class="side-nav">
             <router-link to="/projects" class="side-link">
@@ -123,14 +172,89 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { getSiteInfo, getHomeRecentProjects, getHomeRecentBlogs } from '../api'
+import { ref, computed, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { getSiteInfo, getHomeRecentProjects, getHomeRecentBlogs, getRandomTip, listProjects, listBlogs } from '../api'
 
 const siteInfo = ref<any>({})
 const recentProjects = ref<any[]>([])
 const recentBlogs = ref<any[]>([])
 const projectsLoading = ref(false)
 const blogsLoading = ref(false)
+
+/* ---------------- 实时时钟 ---------------- */
+const now = ref(new Date())
+let clockTimer: number | undefined
+
+const pad = (n: number) => String(n).padStart(2, '0')
+
+const clockTime = computed(() => {
+  const d = now.value
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+})
+
+const clockDate = computed(() => {
+  const d = now.value
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 星期${'日一二三四五六'[d.getDay()]}`
+})
+
+const greeting = computed(() => {
+  const h = now.value.getHours()
+  if (h < 6) return '夜深了'
+  if (h < 9) return '早上好'
+  if (h < 12) return '上午好'
+  if (h < 14) return '中午好'
+  if (h < 18) return '下午好'
+  if (h < 23) return '晚上好'
+  return '夜深了'
+})
+
+/* ---------------- 小贴士 ---------------- */
+const tip = ref('')
+const tipLoading = ref(false)
+
+async function loadTip() {
+  if (tipLoading.value) return
+  tipLoading.value = true
+  try {
+    const res: any = await getRandomTip()
+    tip.value = res.data?.content || '暂无小贴士，可在后台「小贴士管理」中添加'
+  } catch {
+    tip.value = '暂无小贴士，可在后台「小贴士管理」中添加'
+  } finally {
+    tipLoading.value = false
+  }
+}
+
+/* ---------------- Hero 光晕跟随 ---------------- */
+const heroRef = ref<HTMLElement>()
+const spot = reactive({ x: 70, y: 10, active: false })
+
+const glowStyle = computed(() => ({
+  left: `${spot.x}%`,
+  top: `${spot.y}%`,
+  opacity: spot.active ? '1' : '0.7'
+}))
+
+function onHeroMove(e: MouseEvent) {
+  const el = heroRef.value
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  spot.x = ((e.clientX - rect.left) / rect.width) * 100
+  spot.y = ((e.clientY - rect.top) / rect.height) * 100
+  spot.active = true
+}
+
+function onHeroLeave() {
+  spot.active = false
+  spot.x = 70
+  spot.y = 10
+}
+
+/* ---------------- 统计数字 ---------------- */
+const counts = reactive({ projects: 0, blogs: 0 })
+const shownProjects = ref(0)
+const shownBlogs = ref(0)
+const shownTech = ref(0)
 
 const techList = computed(() =>
   (siteInfo.value.site_tech_stack || '')
@@ -139,15 +263,44 @@ const techList = computed(() =>
     .filter(Boolean)
 )
 
-// 站点信息优先加载，保证首屏固定内容立即展示
+function animateNumber(from: number, to: number, setter: (v: number) => void, duration = 900) {
+  const start = performance.now()
+  const step = (t: number) => {
+    const p = Math.min(1, (t - start) / duration)
+    const eased = 1 - Math.pow(1 - p, 3)
+    setter(Math.round(from + (to - from) * eased))
+    if (p < 1) requestAnimationFrame(step)
+  }
+  requestAnimationFrame(step)
+}
+
+async function loadCounts() {
+  try {
+    const [p, b]: any[] = await Promise.all([
+      listProjects({ pageNum: 1, pageSize: 1 }),
+      listBlogs({ pageNum: 1, pageSize: 1 })
+    ])
+    counts.projects = p.data?.total || 0
+    counts.blogs = b.data?.total || 0
+    animateNumber(0, counts.projects, v => (shownProjects.value = v))
+    animateNumber(0, counts.blogs, v => (shownBlogs.value = v))
+  } catch { /* ignore */ }
+}
+
+/* ---------------- 基础数据 ---------------- */
+function fmtDate(value?: string) {
+  if (!value) return ''
+  return String(value).slice(0, 10)
+}
+
 async function loadSiteInfo() {
   try {
     const res: any = await getSiteInfo()
     siteInfo.value = res.data || {}
+    animateNumber(0, techList.value.length, v => (shownTech.value = v), 700)
   } catch { /* ignore */ }
 }
 
-// 最近项目懒加载
 async function loadRecentProjects() {
   projectsLoading.value = true
   try {
@@ -158,7 +311,6 @@ async function loadRecentProjects() {
   }
 }
 
-// 最近博客懒加载
 async function loadRecentBlogs() {
   blogsLoading.value = true
   try {
@@ -173,6 +325,13 @@ onMounted(() => {
   loadSiteInfo()
   loadRecentProjects()
   loadRecentBlogs()
+  loadCounts()
+  loadTip()
+  clockTimer = window.setInterval(() => (now.value = new Date()), 1000)
+})
+
+onBeforeUnmount(() => {
+  if (clockTimer) window.clearInterval(clockTimer)
 })
 </script>
 
@@ -194,10 +353,12 @@ onMounted(() => {
 
 .hero-glow {
   position: absolute;
-  inset: -40% -10% auto auto;
   width: 520px;
-  height: 320px;
-  background: radial-gradient(closest-side, rgba(37, 99, 235, 0.16), transparent 70%);
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(37, 99, 235, 0.16), rgba(37, 99, 235, 0.05) 55%, transparent 72%);
+  transition: left 0.35s ease-out, top 0.35s ease-out, opacity 0.4s ease;
   pointer-events: none;
 }
 
@@ -268,6 +429,41 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+/* 统计数字 */
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.stat-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--brand-600);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.stat-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--color-border);
+}
+
 /* ---------- 内容区 ---------- */
 .block {
   margin-bottom: var(--space-8);
@@ -319,6 +515,15 @@ onMounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.card-time {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+  min-height: 18px;
 }
 
 .blog-list {
@@ -379,6 +584,102 @@ onMounted(() => {
   margin-bottom: var(--space-3);
 }
 
+/* 时钟卡 */
+.now-card {
+  background:
+    linear-gradient(150deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0) 55%),
+    var(--surface);
+}
+
+.now-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.clock-time {
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  color: var(--color-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.now-greet {
+  font-size: var(--text-xs);
+  color: var(--brand-600);
+  background: var(--brand-50);
+  border: 1px solid var(--brand-100);
+  border-radius: var(--radius-pill);
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+.clock-date {
+  margin-top: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 小贴士卡 */
+.tip-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.tip-head .side-title {
+  margin-bottom: 0;
+}
+
+.tip-refresh {
+  border: none;
+  background: transparent;
+  color: var(--ink-400);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.4s ease;
+}
+.tip-refresh:hover {
+  color: var(--brand-600);
+  background: var(--brand-50);
+}
+.tip-refresh.spinning {
+  transform: rotate(360deg);
+  color: var(--brand-600);
+}
+
+.tip-text {
+  position: relative;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--brand-100);
+  font-size: var(--text-sm);
+  line-height: 1.75;
+  color: var(--color-text-muted);
+}
+
+.tip-fade-enter-active,
+.tip-fade-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.tip-fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+.tip-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
 .side-nav {
   display: flex;
   flex-direction: column;
@@ -425,6 +726,9 @@ onMounted(() => {
   }
   .hero-title {
     font-size: var(--text-2xl);
+  }
+  .clock-time {
+    font-size: 26px;
   }
 }
 </style>

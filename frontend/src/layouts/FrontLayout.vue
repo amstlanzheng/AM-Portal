@@ -44,8 +44,29 @@
     </header>
 
     <main class="site-main">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
+
+    <!-- 回到顶部（带滚动进度环） -->
+    <transition name="backtop">
+      <button v-if="showBackTop" class="back-top" :title="`回到顶部 ${scrollPercent}%`" @click="scrollToTop">
+        <svg class="ring" viewBox="0 0 36 36" aria-hidden="true">
+          <circle class="ring-track" cx="18" cy="18" r="16" />
+          <circle
+            class="ring-bar"
+            cx="18"
+            cy="18"
+            r="16"
+            :stroke-dasharray="`${scrollPercent} 100`"
+          />
+        </svg>
+        <el-icon><Top /></el-icon>
+      </button>
+    </transition>
 
     <footer class="site-footer">
       <div class="footer-inner">
@@ -61,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { getHomePage } from '../api'
@@ -93,6 +114,33 @@ onMounted(async () => {
   if (userStore.token && !userStore.userInfo) {
     userStore.fetchUserInfo()
   }
+  window.addEventListener('scroll', onScroll, { passive: true })
+  onScroll()
+})
+
+/* 回到顶部 */
+const scrollPercent = ref(0)
+const showBackTop = ref(false)
+let ticking = false
+
+function onScroll() {
+  if (ticking) return
+  ticking = true
+  requestAnimationFrame(() => {
+    const top = window.scrollY || document.documentElement.scrollTop
+    const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+    scrollPercent.value = Math.min(100, Math.round((top / max) * 100))
+    showBackTop.value = top > 420
+    ticking = false
+  })
+}
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onScroll)
 })
 
 function handleLogout() {
@@ -277,6 +325,63 @@ function handleLogout() {
   color: var(--ink-300);
 }
 
+/* ---------- 回到顶部 ---------- */
+.back-top {
+  position: fixed;
+  right: 28px;
+  bottom: 160px;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  color: var(--color-text-muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 998;
+  box-shadow: var(--shadow-sm);
+  transition: color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.back-top:hover {
+  color: var(--brand-600);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.ring {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.ring-track {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 2;
+}
+.ring-bar {
+  fill: none;
+  stroke: var(--brand-500);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.85;
+  transition: stroke-dasharray 0.15s linear;
+}
+
+.backtop-enter-active,
+.backtop-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.backtop-enter-from,
+.backtop-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.92);
+}
+
 @media (max-width: 768px) {
   .header-inner {
     gap: var(--space-4);
@@ -291,6 +396,12 @@ function handleLogout() {
   }
   .btn {
     padding: 0 14px;
+  }
+  .back-top {
+    right: 18px;
+    bottom: 148px;
+    width: 42px;
+    height: 42px;
   }
 }
 </style>

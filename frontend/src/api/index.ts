@@ -5,6 +5,7 @@ export const getHomePage = () => request.get('/home')
 export const getSiteInfo = () => request.get('/home/site-info')
 export const getHomeRecentProjects = (limit: number = 5) => request.get('/home/recent-projects', { params: { limit } })
 export const getHomeRecentBlogs = (limit: number = 5) => request.get('/home/recent-blogs', { params: { limit } })
+export const getRandomTip = () => request.get('/home/tips/random')
 
 // 认证
 export const login = (data: any) => request.post('/auth/login', data)
@@ -49,6 +50,11 @@ export const deleteTag = (id: number) => request.delete(`/admin/blogs/tags/${id}
 export const reviewBlog = (id: number, data: { reviewStatus: string, reviewRemark?: string }) => request.put(`/admin/blogs/${id}/review`, data)
 export const listAdminBlogs = (params: any) => request.get('/admin/blogs', { params })
 export const detectSensitiveWords = (text: string) => request.post('/admin/sensitive-words/detect', { text })
+
+// 小贴士
+export const listTips = () => request.get('/admin/tips')
+export const addTip = (content: string) => request.post('/admin/tips', { content })
+export const deleteTip = (id: number) => request.delete(`/admin/tips/${id}`)
 
 // 敏感词
 export const listSensitiveWords = (params: any) => request.get('/admin/sensitive-words', { params })
