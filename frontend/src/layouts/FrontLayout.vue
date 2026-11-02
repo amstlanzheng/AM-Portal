@@ -165,6 +165,27 @@ function handleLogout() {
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
   border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* 顶栏下方一道循环扫光，静态但带科技感 */
+.site-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.55), transparent);
+  background-size: 38% 100%;
+  background-repeat: no-repeat;
+  animation: header-scan 7s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes header-scan {
+  0% { background-position: -40% 0; }
+  100% { background-position: 140% 0; }
 }
 
 .header-inner {
@@ -187,6 +208,7 @@ function handleLogout() {
 }
 
 .brand-mark {
+  position: relative;
   width: 30px;
   height: 30px;
   border-radius: 9px;
@@ -197,6 +219,21 @@ function handleLogout() {
   color: #fff;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-600));
   box-shadow: var(--shadow-accent);
+}
+
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 11px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  animation: mark-pulse 2.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mark-pulse {
+  0% { transform: scale(0.96); opacity: 0.85; }
+  100% { transform: scale(1.22); opacity: 0; }
 }
 
 .brand-text {

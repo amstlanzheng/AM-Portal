@@ -216,6 +216,22 @@ function scrollToBottom() {
   transform: scale(0.94);
 }
 
+/* 旋转光环 */
+.chat-toggle::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 58%, rgba(37, 99, 235, 0.6) 76%, transparent 88%);
+  animation: chat-spin 3.6s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes chat-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* 呼吸光晕 */
 .chat-pulse {
   position: absolute;

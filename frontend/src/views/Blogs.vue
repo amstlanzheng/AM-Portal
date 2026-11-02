@@ -3,7 +3,7 @@
     <header class="page-head">
       <div>
         <p class="eyebrow">Blog</p>
-        <h1 class="page-title">博客</h1>
+        <h1 class="page-title" data-idx="02">博客</h1>
         <p class="page-sub">记录踩过的坑、想通的事，以及一些不成体系的笔记</p>
       </div>
       <span class="count">{{ total }} 篇</span>
@@ -19,7 +19,7 @@
           <article
             v-for="blog in blogs"
             :key="blog.id"
-            class="blog-card surface card-hover"
+            class="blog-card surface card-hover tech-card"
             @click="$router.push('/blogs/' + blog.id)"
           >
             <div v-if="blog.cover" class="cover blog-thumb">

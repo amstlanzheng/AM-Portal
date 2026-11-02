@@ -3,7 +3,7 @@
     <header class="page-head">
       <div>
         <p class="eyebrow">Projects</p>
-        <h1 class="page-title">项目列表</h1>
+        <h1 class="page-title" data-idx="01">项目列表</h1>
         <p class="page-sub">我在做、做过以及正在维护的东西</p>
       </div>
       <span class="count">{{ total }} 个项目</span>
@@ -17,7 +17,7 @@
         <article
           v-for="project in projects"
           :key="project.id"
-          class="project-card surface card-hover"
+          class="project-card surface card-hover tech-card"
           @click="$router.push('/projects/' + project.id)"
         >
           <div class="cover">

@@ -3,11 +3,17 @@
     <!-- Hero -->
     <section
       ref="heroRef"
-      class="hero surface"
+      class="hero surface tech-card"
       @mousemove="onHeroMove"
       @mouseleave="onHeroLeave"
     >
       <div class="hero-glow" :style="glowStyle" aria-hidden="true"></div>
+
+      <div class="hero-hud">
+        <span class="hud-chip"><i class="live-dot"></i> SYSTEM ONLINE</span>
+        <span class="hud-meta">AM-PORTAL // BUILD 2026.11</span>
+      </div>
+
       <div class="hero-body">
         <el-avatar :size="88" :src="siteInfo.site_avatar" class="hero-avatar">
           {{ (siteInfo.site_title || 'AM').slice(0, 1).toUpperCase() }}
@@ -29,20 +35,23 @@
             </a>
           </div>
 
-          <div class="hero-stats">
-            <div class="stat">
-              <span class="stat-num">{{ shownProjects }}</span>
-              <span class="stat-label">项目</span>
+          <div class="hero-terminal">
+            <span class="prompt">&gt;</span>
+            <span class="typed">{{ typed }}<i class="caret"></i></span>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="metric">
+              <span class="metric-num">{{ shownProjects }}</span>
+              <span class="metric-label">PROJECTS</span>
             </div>
-            <span class="stat-sep"></span>
-            <div class="stat">
-              <span class="stat-num">{{ shownBlogs }}</span>
-              <span class="stat-label">博客</span>
+            <div class="metric">
+              <span class="metric-num">{{ shownBlogs }}</span>
+              <span class="metric-label">POSTS</span>
             </div>
-            <span class="stat-sep"></span>
-            <div class="stat">
-              <span class="stat-num">{{ shownTech }}</span>
-              <span class="stat-label">技术栈</span>
+            <div class="metric">
+              <span class="metric-num">{{ shownTech }}</span>
+              <span class="metric-label">STACK</span>
             </div>
           </div>
         </div>
@@ -54,7 +63,7 @@
         <!-- 最近项目 -->
         <section class="block">
           <div class="section-head">
-            <h2 class="section-title">最近项目</h2>
+            <h2 class="section-title" data-idx="01">最近项目</h2>
             <router-link class="section-more" to="/projects">全部项目 →</router-link>
           </div>
           <div v-loading="projectsLoading" element-loading-text="加载中..." class="loading-box">
@@ -66,7 +75,7 @@
                 v-for="(project, idx) in recentProjects"
                 :key="project.id"
                 v-reveal="idx * 70"
-                class="item-card surface card-hover"
+                class="item-card surface card-hover tech-card"
                 @click="$router.push('/projects/' + project.id)"
               >
                 <div class="cover">
@@ -86,7 +95,7 @@
         <!-- 最近博客 -->
         <section class="block">
           <div class="section-head">
-            <h2 class="section-title">最近博客</h2>
+            <h2 class="section-title" data-idx="02">最近博客</h2>
             <router-link class="section-more" to="/blogs">全部博客 →</router-link>
           </div>
           <div v-loading="blogsLoading" element-loading-text="加载中..." class="loading-box">
@@ -98,7 +107,7 @@
                 v-for="(blog, idx) in recentBlogs"
                 :key="blog.id"
                 v-reveal="idx * 60"
-                class="blog-row surface card-hover"
+                class="blog-row surface card-hover tech-card"
                 @click="$router.push('/blogs/' + blog.id)"
               >
                 <div class="blog-row-main">
@@ -118,16 +127,21 @@
       <!-- 侧栏 -->
       <aside class="home-side">
         <!-- 时钟 -->
-        <section v-reveal class="surface side-card now-card">
-          <div class="now-top">
-            <span class="clock-time">{{ clockTime }}</span>
-            <span class="now-greet">{{ greeting }}</span>
+        <section v-reveal class="surface side-card clock-card tech-card">
+          <div class="panel-head">
+            <span class="hud-label">SYS.TIME</span>
+            <span class="panel-status"><i class="live-dot"></i>{{ greeting }}</span>
           </div>
-          <p class="clock-date">{{ clockDate }}</p>
+          <div class="clock-digits">{{ clockTime }}</div>
+          <div class="clock-bar"><i :style="{ width: secPercent + '%' }"></i></div>
+          <div class="clock-foot">
+            <span class="clock-date">{{ clockDate }}</span>
+            <span class="hud-label">UTC+8</span>
+          </div>
         </section>
 
         <!-- 小贴士 -->
-        <section v-reveal="80" class="surface side-card tip-card">
+        <section v-reveal="80" class="surface side-card tip-card tech-card">
           <div class="tip-head">
             <h3 class="side-title">小贴士</h3>
             <button class="tip-refresh" :class="{ spinning: tipLoading }" title="换一条" @click="loadTip">
@@ -140,7 +154,7 @@
         </section>
 
         <!-- 技术栈 -->
-        <section v-reveal="140" class="surface side-card">
+        <section v-reveal="140" class="surface side-card tech-card">
           <h3 class="side-title">技术栈</h3>
           <div v-if="techList.length" class="chip-list">
             <span v-for="tech in techList" :key="tech" class="chip">{{ tech }}</span>
@@ -149,7 +163,7 @@
         </section>
 
         <!-- 快速导航 -->
-        <section v-reveal="200" class="surface side-card">
+        <section v-reveal="200" class="surface side-card tech-card">
           <h3 class="side-title">快速导航</h3>
           <div class="side-nav">
             <router-link to="/projects" class="side-link">
@@ -207,6 +221,40 @@ const greeting = computed(() => {
   if (h < 23) return '晚上好'
   return '夜深了'
 })
+
+const secPercent = computed(() => (now.value.getSeconds() / 60) * 100)
+
+/* ---------------- 终端打字机 ---------------- */
+const phrases = ['把重复的事交给脚本', '先跑通，再跑好', '小步提交，快速回滚']
+const typed = ref('')
+let typeTimer: number | undefined
+let phraseIdx = 0
+let charIdx = 0
+let deleting = false
+
+function tickType() {
+  const phrase = phrases[phraseIdx]
+  if (!deleting) {
+    charIdx++
+    typed.value = phrase.slice(0, charIdx)
+    if (charIdx >= phrase.length) {
+      deleting = true
+      typeTimer = window.setTimeout(tickType, 2200)
+      return
+    }
+    typeTimer = window.setTimeout(tickType, 110)
+  } else {
+    charIdx--
+    typed.value = phrase.slice(0, charIdx)
+    if (charIdx <= 0) {
+      deleting = false
+      phraseIdx = (phraseIdx + 1) % phrases.length
+      typeTimer = window.setTimeout(tickType, 420)
+      return
+    }
+    typeTimer = window.setTimeout(tickType, 45)
+  }
+}
 
 /* ---------------- 小贴士 ---------------- */
 const tip = ref('')
@@ -328,10 +376,17 @@ onMounted(() => {
   loadCounts()
   loadTip()
   clockTimer = window.setInterval(() => (now.value = new Date()), 1000)
+
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    typed.value = phrases[0]
+  } else {
+    typeTimer = window.setTimeout(tickType, 600)
+  }
 })
 
 onBeforeUnmount(() => {
   if (clockTimer) window.clearInterval(clockTimer)
+  if (typeTimer) window.clearTimeout(typeTimer)
 })
 </script>
 
@@ -429,39 +484,119 @@ onBeforeUnmount(() => {
   transform: translateY(-1px);
 }
 
-/* 统计数字 */
-.hero-stats {
+/* ---------- Hero HUD ---------- */
+.hero-hud {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  margin-top: var(--space-5);
-  padding-top: var(--space-4);
-  border-top: 1px dashed var(--color-border);
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.stat {
+.hud-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px;
+  border: 1px solid var(--brand-100);
+  border-radius: var(--radius-pill);
+  background: var(--brand-50);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--brand-700);
+}
+
+.hud-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink-400);
+}
+
+/* 终端打字 */
+.hero-terminal {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--space-4);
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  max-width: 460px;
 }
 
-.stat-num {
+.hero-terminal .prompt {
+  color: var(--brand-600);
+  font-weight: 700;
+}
+
+.hero-terminal .typed {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.caret {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--brand-600);
+  animation: caret-blink 1s steps(2, start) infinite;
+}
+
+@keyframes caret-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* 指标格 */
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 0;
+  justify-content: start;
+  margin-top: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 20px;
+  border-right: 1px solid var(--color-border);
+}
+
+.metric:last-child {
+  border-right: 0;
+}
+
+.metric-num {
   font-family: var(--font-mono);
   font-size: var(--text-xl);
   font-weight: 700;
+  line-height: 1.1;
   color: var(--brand-600);
   font-variant-numeric: tabular-nums;
 }
 
-.stat-label {
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
-}
-
-.stat-sep {
-  width: 1px;
-  height: 14px;
-  background: var(--color-border);
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--ink-400);
 }
 
 /* ---------- 内容区 ---------- */
@@ -585,43 +720,64 @@ onBeforeUnmount(() => {
 }
 
 /* 时钟卡 */
-.now-card {
+.clock-card {
   background:
-    linear-gradient(150deg, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(150deg, rgba(37, 99, 235, 0.07), rgba(255, 255, 255, 0) 55%),
     var(--surface);
 }
 
-.now-top {
+.panel-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 
-.clock-time {
+.panel-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.clock-digits {
   font-family: var(--font-mono);
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
   letter-spacing: 0.02em;
   color: var(--color-text-strong);
   font-variant-numeric: tabular-nums;
 }
 
-.now-greet {
-  font-size: var(--text-xs);
-  color: var(--brand-600);
-  background: var(--brand-50);
-  border: 1px solid var(--brand-100);
-  border-radius: var(--radius-pill);
-  padding: 2px 10px;
-  white-space: nowrap;
+.clock-bar {
+  height: 2px;
+  margin: var(--space-3) 0 var(--space-2);
+  border-radius: 2px;
+  background: var(--surface-muted);
+  overflow: hidden;
+}
+
+.clock-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-500), var(--brand-600));
+  transition: width 1s linear;
+}
+
+.clock-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 
 .clock-date {
-  margin-top: var(--space-2);
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-size: 10px;
+  letter-spacing: 0.04em;
   color: var(--color-text-faint);
   font-variant-numeric: tabular-nums;
 }
@@ -727,8 +883,19 @@ onBeforeUnmount(() => {
   .hero-title {
     font-size: var(--text-2xl);
   }
-  .clock-time {
-    font-size: 26px;
+  .clock-digits {
+    font-size: 28px;
+  }
+  .hero-terminal {
+    max-width: 100%;
+    font-size: 12px;
+  }
+  .hero-metrics {
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+  }
+  .metric {
+    padding: 8px 12px;
   }
 }
 </style>
