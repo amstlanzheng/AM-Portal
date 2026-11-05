@@ -6,7 +6,11 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import { reveal } from './directives/reveal'
+import { applyTheme } from './theme'
 import './style.css'
+
+// 挂载前应用本地缓存主题，避免首屏闪烁（默认 teal）
+applyTheme(localStorage.getItem('theme'))
 
 const app = createApp(App)
 

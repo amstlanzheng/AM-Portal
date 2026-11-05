@@ -22,11 +22,11 @@ spring:
           min-idle: 5
           max-wait: 3000ms
 
-  # 敏感词表与博客审核字段迁移（脚本幂等，可重复执行）
+  # 敏感词表与博客审核字段迁移、每日小贴士表迁移（脚本幂等，可重复执行）
   sql:
     init:
       mode: always
-      schema-locations: classpath:db/migration-sensitive-word.sql
+      schema-locations: classpath:db/migration-sensitive-word.sql,classpath:db/migration-daily-tip.sql,classpath:db/migration-user-theme.sql
       continue-on-error: true
 
 mybatis-plus:

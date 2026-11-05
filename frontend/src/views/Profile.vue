@@ -36,16 +36,41 @@
         </el-form>
       </section>
 
-      <section class="surface panel">
-        <h2 class="panel-title">安全设置</h2>
-        <div class="security-row">
-          <div>
-            <p class="security-label">登录密码</p>
-            <p class="faint">建议定期更换，长度不少于 6 位</p>
+      <div class="right-column">
+        <section class="surface panel">
+          <h2 class="panel-title">安全设置</h2>
+          <div class="security-row">
+            <div>
+              <p class="security-label">登录密码</p>
+              <p class="faint">建议定期更换，长度不少于 6 位</p>
+            </div>
+            <el-button @click="openPasswordDialog">修改密码</el-button>
           </div>
-          <el-button @click="openPasswordDialog">修改密码</el-button>
-        </div>
-      </section>
+        </section>
+
+        <section class="surface panel">
+          <h2 class="panel-title">界面配色</h2>
+          <p class="faint theme-hint">选择偏好的界面主题，仅对本账号生效</p>
+          <div class="theme-grid">
+            <button
+              v-for="t in THEMES"
+              :key="t.key"
+              class="theme-swatch"
+              :class="{ active: currentTheme === t.key }"
+              @click="handleTheme(t.key)"
+            >
+              <span class="swatch-dot" :style="{ background: t.colors['600'] }">
+                <span v-if="currentTheme === t.key" class="swatch-check">✓</span>
+              </span>
+              <span class="swatch-name">{{ t.name }}</span>
+            </button>
+            <button class="theme-swatch" :class="{ active: !currentTheme }" @click="handleFollowSite">
+              <span class="swatch-dot follow">站</span>
+              <span class="swatch-name">跟随站点</span>
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
 
     <el-dialog v-model="pwdDialogVisible" title="修改密码" width="420px">
@@ -72,13 +97,15 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
-import { updateProfile, updateAvatar, uploadFile, changeMyPassword } from '../api'
+import { updateProfile, updateAvatar, uploadFile, changeMyPassword, updateMyTheme } from '../api'
 import { ElMessage, type FormInstance } from 'element-plus'
+import { THEMES, getTheme, applyTheme } from '../theme'
 
 const router = useRouter()
 const userStore = useUserStore()
 const fileInput = ref<HTMLInputElement>()
 const form = reactive({ nickname: '', email: '', phone: '', avatar: '' })
+const currentTheme = ref('')
 
 const pwdDialogVisible = ref(false)
 const pwdFormRef = ref<FormInstance>()
@@ -108,8 +135,40 @@ onMounted(async () => {
     form.email = userStore.userInfo.email || ''
     form.phone = userStore.userInfo.phone || ''
     form.avatar = userStore.userInfo.avatar || ''
+    currentTheme.value = userStore.userInfo.theme || ''
   }
 })
+
+async function handleTheme(key: string) {
+  const prev = currentTheme.value
+  currentTheme.value = key
+  applyTheme(key)
+  try {
+    await updateMyTheme(key)
+    if (userStore.userInfo) userStore.userInfo.theme = key
+    ElMessage.success(`已切换为「${getTheme(key).name}」主题`)
+  } catch {
+    currentTheme.value = prev
+    if (prev) applyTheme(prev)
+    else userStore.syncTheme()
+    ElMessage.error('主题保存失败，已还原')
+  }
+}
+
+async function handleFollowSite() {
+  const prev = currentTheme.value
+  currentTheme.value = ''
+  try {
+    await updateMyTheme('')
+    if (userStore.userInfo) userStore.userInfo.theme = null
+    await userStore.syncTheme()
+    ElMessage.success('已恢复跟随站点默认配色')
+  } catch {
+    currentTheme.value = prev
+    applyTheme(prev)
+    ElMessage.error('操作失败，已还原')
+  }
+}
 
 function handleUploadAvatar() { fileInput.value?.click() }
 
@@ -214,6 +273,80 @@ async function handleChangePassword() {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--surface-muted);
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.theme-hint {
+  margin: -12px 0 16px;
+}
+
+.theme-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  min-width: 64px;
+}
+
+.theme-swatch:hover {
+  background: var(--surface-muted);
+}
+
+.swatch-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.swatch-dot.follow {
+  background: var(--surface-muted);
+  border: 1px dashed var(--color-text-faint);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  box-shadow: none;
+}
+
+.theme-swatch.active .swatch-dot {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+}
+
+.swatch-check {
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+.swatch-name {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.theme-swatch.active .swatch-name {
+  color: var(--brand-600);
+  font-weight: 600;
 }
 
 .security-label {

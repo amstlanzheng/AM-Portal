@@ -45,6 +45,14 @@ public class UserController {
         return Result.success();
     }
 
+    @Operation(summary = "修改界面主题偏好")
+    @PutMapping("/me/theme")
+    public Result<Void> updateTheme(@AuthenticationPrincipal UserPrincipal principal,
+                                    @RequestParam(required = false) String theme) {
+        userService.updateTheme(principal.getId(), theme);
+        return Result.success();
+    }
+
     // ===== 管理员接口 =====
 
     @Operation(summary = "用户列表(管理员)")

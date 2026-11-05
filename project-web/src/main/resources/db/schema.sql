@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS `user` (
     `avatar` VARCHAR(500) DEFAULT NULL COMMENT '头像URL',
     `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '状态: PENDING/ENABLED/DISABLED',
     `is_admin` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否管理员',
+    `theme` VARCHAR(20) DEFAULT NULL COMMENT '界面主题偏好(NULL=跟随站点默认)',
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `deleted` INT NOT NULL DEFAULT 0 COMMENT '逻辑删除',
@@ -121,6 +122,17 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
     UNIQUE KEY `uk_config_key` (`config_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
 
+-- 每日小贴士表
+CREATE TABLE IF NOT EXISTS `daily_tip` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键',
+    `content` VARCHAR(500) NOT NULL COMMENT '贴士内容',
+    `is_enabled` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '是否启用',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `deleted` INT NOT NULL DEFAULT 0 COMMENT '逻辑删除',
+    PRIMARY KEY (`id`),
+    KEY `idx_enabled` (`is_enabled`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='每日小贴士表';
+
 -- 文件信息表
 CREATE TABLE IF NOT EXISTS `file_info` (
     `id` BIGINT NOT NULL AUTO_INCREMENT,
@@ -194,6 +206,7 @@ INSERT INTO `sys_config` (`config_key`, `config_value`, `description`) VALUES
 ('site_qq', '', 'QQ号'),
 ('site_wechat_qrcode', '', '微信二维码URL'),
 ('site_tech_stack', 'Java,Spring Boot,Vue3,MySQL,Redis', '技术栈'),
+('site_theme', 'teal', '站点默认界面主题(teal/blue/violet/rose/amber/slate)'),
 ('ai_enabled', 'true', 'AI助手是否开放给游客');
 
 -- 初始化默认Prompt

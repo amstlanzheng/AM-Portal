@@ -16,6 +16,7 @@ export const refreshToken = (refreshToken: string) => request.post('/auth/refres
 export const getCurrentUser = () => request.get('/users/me')
 export const updateProfile = (data: any) => request.put('/users/me/profile', null, { params: data })
 export const updateAvatar = (avatarUrl: string) => request.put('/users/me/avatar', null, { params: { avatarUrl } })
+export const updateMyTheme = (theme: string) => request.put('/users/me/theme', null, { params: { theme } })
 export const listUsers = (params: any) => request.get('/users/admin/list', { params })
 export const approveUser = (id: number) => request.put(`/users/admin/${id}/approve`)
 export const disableUser = (id: number) => request.put(`/users/admin/${id}/disable`)

@@ -28,6 +28,9 @@ public class User {
 
     private Boolean isAdmin;
 
+    /** 界面主题偏好（NULL=跟随站点默认） */
+    private String theme;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

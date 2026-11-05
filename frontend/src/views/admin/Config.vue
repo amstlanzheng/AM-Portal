@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 style="margin-bottom:20px">系统配置</h2>
+    <h2 class="admin-page-title" style="margin-bottom:20px">系统配置</h2>
     <el-card>
       <el-form :model="form" label-width="120px" style="max-width:600px">
         <el-form-item label="网站头像">
@@ -20,6 +20,26 @@
         <el-form-item label="邮箱"><el-input v-model="form.site_email" /></el-form-item>
         <el-form-item label="QQ"><el-input v-model="form.site_qq" /></el-form-item>
         <el-form-item label="技术栈"><el-input v-model="form.site_tech_stack" placeholder="逗号分隔" /></el-form-item>
+        <el-form-item label="站点默认配色">
+          <div class="site-theme-picker">
+            <div class="theme-grid">
+              <button
+                v-for="t in THEMES"
+                :key="t.key"
+                type="button"
+                class="theme-swatch"
+                :class="{ active: form.site_theme === t.key }"
+                @click="form.site_theme = t.key"
+              >
+                <span class="swatch-dot" :style="{ background: t.colors['600'] }">
+                  <span v-if="form.site_theme === t.key" class="swatch-check">✓</span>
+                </span>
+                <span class="swatch-name">{{ t.name }}</span>
+              </button>
+            </div>
+            <p class="theme-tip">仅影响未设置个人偏好的用户；已登录用户可在「个人中心」自选配色</p>
+          </div>
+        </el-form-item>
         <el-form-item label="AI 开放"><el-switch v-model="aiEnabled" active-value="true" inactive-value="false" /></el-form-item>
         <el-form-item><el-button type="primary" @click="handleSave" :loading="saving">保存</el-button></el-form-item>
       </el-form>
@@ -31,8 +51,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { getHomeConfig, updateHomeConfig, setConfig, uploadFile } from '../../api'
 import { ElMessage } from 'element-plus'
+import { THEMES, DEFAULT_THEME } from '../../theme'
 
-const form = reactive({ site_title: '', site_subtitle: '', site_description: '', site_github: '', site_gitee: '', site_email: '', site_qq: '', site_tech_stack: '', site_avatar: '' })
+const form = reactive({ site_title: '', site_subtitle: '', site_description: '', site_github: '', site_gitee: '', site_email: '', site_qq: '', site_tech_stack: '', site_avatar: '', site_theme: DEFAULT_THEME })
 const aiEnabled = ref('true')
 const saving = ref(false)
 
@@ -40,6 +61,7 @@ onMounted(async () => {
   try {
     const res: any = await getHomeConfig()
     Object.assign(form, res.data || {})
+    if (!form.site_theme) form.site_theme = DEFAULT_THEME
     aiEnabled.value = res.data?.ai_enabled || 'true'
   } catch { /* ignore */ }
 })
@@ -68,4 +90,47 @@ async function handleSave() {
 
 <style scoped>
 .avatar-upload { display: flex; align-items: center; gap: 12px; }
+
+.site-theme-picker { width: 100%; }
+
+.theme-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  font-family: inherit;
+  min-width: 60px;
+}
+
+.theme-swatch:hover { background: var(--el-fill-color-light); }
+
+.swatch-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.theme-swatch.active .swatch-dot {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 2px;
+}
+
+.swatch-check { color: #fff; font-weight: 700; font-size: 13px; line-height: 1; }
+
+.swatch-name { font-size: 12px; color: var(--el-text-color-secondary); }
+
+.theme-swatch.active .swatch-name { color: var(--brand-600); font-weight: 600; }
+
+.theme-tip { font-size: 12px; color: var(--el-text-color-secondary); margin-top: 8px; }
 </style>

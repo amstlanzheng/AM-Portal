@@ -7,12 +7,15 @@ import com.am.common.util.RedisUtil;
 import com.am.user.entity.User;
 import com.am.user.mapper.UserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -90,6 +93,28 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         }
         user.setAvatar(avatarUrl);
         updateById(user);
+    }
+
+    /** 预设主题 key 白名单 */
+    private static final List<String> THEME_WHITELIST = List.of("teal", "blue", "violet", "rose", "amber", "slate");
+
+    public void updateTheme(Long userId, String theme) {
+        User user = getById(userId);
+        if (user == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND);
+        }
+        String value = null;
+        // 空值 = 清除偏好，跟随站点默认
+        if (StringUtils.hasText(theme)) {
+            if (!THEME_WHITELIST.contains(theme)) {
+                throw new BusinessException("不支持的主题：" + theme);
+            }
+            value = theme;
+        }
+        // updateById 默认忽略 null 字段，清空偏好需显式 set
+        update(new LambdaUpdateWrapper<User>()
+                .eq(User::getId, userId)
+                .set(User::getTheme, value));
     }
 
     public void changePassword(Long userId, String oldPassword, String newPassword) {

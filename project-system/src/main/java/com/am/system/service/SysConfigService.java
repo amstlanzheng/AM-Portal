@@ -63,7 +63,8 @@ public class SysConfigService extends ServiceImpl<SysConfigMapper, SysConfig> {
         // 从缓存获取首页信息
         Map<String, String> result = new HashMap<>();
         String[] homeKeys = {"site_title", "site_subtitle", "site_description", "site_avatar",
-                "site_github", "site_gitee", "site_email", "site_qq", "site_wechat_qrcode", "site_tech_stack"};
+                "site_github", "site_gitee", "site_email", "site_qq", "site_wechat_qrcode", "site_tech_stack",
+                "site_theme"};
         for (String key : homeKeys) {
             String value = getConfig(key);
             if (StringUtils.hasText(value)) {
