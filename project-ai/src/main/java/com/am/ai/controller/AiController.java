@@ -5,6 +5,7 @@ import com.am.ai.entity.AiMessage;
 import com.am.ai.service.AiService;
 import com.am.common.result.Result;
 import com.am.framework.security.UserPrincipal;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class AiController {
 
     private final AiService aiService;
+    private final ObjectMapper objectMapper;
 
     @Operation(summary = "AI 对话(流式)")
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -46,9 +48,10 @@ public class AiController {
                         content -> {
                             if (!content.isEmpty()) {
                                 try {
-                                    emitter.send(SseEmitter.event().data(content));
+                                    // JSON 编码：转义内容中的换行等控制字符，避免破坏 SSE 的 data 行格式
+                                    emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(content)));
                                     log.debug("SSE 发送 chunk: {}", content);
-                                } catch (IOException e) {
+                                } catch (Exception e) {
                                     log.error("SSE 发送失败", e);
                                     emitter.completeWithError(e);
                                 }
@@ -58,9 +61,11 @@ public class AiController {
                             log.error("AI 流式调用异常", error);
                             try {
                                 emitter.send(SseEmitter.event().data("错误: " + error.getMessage()));
+                                // 内容可能已部分送达，优雅关闭让错误文本到达客户端，避免连接被粗暴重置
+                                emitter.complete();
                             } catch (IOException ignored) {
+                                emitter.completeWithError(error);
                             }
-                            emitter.completeWithError(error);
                         },
                         () -> {
                             try {

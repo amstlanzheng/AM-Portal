@@ -3,6 +3,7 @@ package com.am.framework.config;
 import com.am.framework.security.JwtAuthenticationFilter;
 import com.am.framework.security.JwtAuthenticationEntryPoint;
 import com.am.framework.security.AccessDeniedHandlerImpl;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,9 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // SseEmitter 等异步请求 complete() 后容器会做 ASYNC 内部派发，
+                        // 此时 SecurityContext 已清理，再次授权会误判为未认证导致连接被断开
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         // 公开接口
                         .requestMatchers(HttpMethod.GET, "/api/home/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects/**").permitAll()

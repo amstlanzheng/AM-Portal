@@ -83,14 +83,19 @@ public class AiService extends ServiceImpl<AiConversationMapper, AiConversation>
                     return "";
                 })
                 .doOnComplete(() -> {
-                    AiMessage assistantMsg = new AiMessage();
-                    assistantMsg.setConversationId(convId);
-                    assistantMsg.setRole("assistant");
-                    assistantMsg.setContent(responseBuilder.toString());
-                    assistantMsg.setCreateTime(LocalDateTime.now());
-                    messageMapper.insert(assistantMsg);
+                    // 持久化失败不应中断 SSE 流的正常收尾（否则客户端会在完整输出后看到报错）
+                    try {
+                        AiMessage assistantMsg = new AiMessage();
+                        assistantMsg.setConversationId(convId);
+                        assistantMsg.setRole("assistant");
+                        assistantMsg.setContent(responseBuilder.toString());
+                        assistantMsg.setCreateTime(LocalDateTime.now());
+                        messageMapper.insert(assistantMsg);
 
-                    updateRedisContext(convId, userMessage, responseBuilder.toString());
+                        updateRedisContext(convId, userMessage, responseBuilder.toString());
+                    } catch (Exception e) {
+                        log.error("AI 消息持久化失败(不影响本次对话展示), conversationId={}", convId, e);
+                    }
 
                     long duration = System.currentTimeMillis() - startTime;
                     log.info("AI 调用完成, conversationId={}, duration={}ms", convId, duration);

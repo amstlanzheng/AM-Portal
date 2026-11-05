@@ -147,7 +147,8 @@ async function sendMessage() {
           if (line.startsWith('data:')) {
             const data = line.substring(5)
             if (data.trim() === '[DONE]') continue
-            assistantContent += data
+            // 后端对 chunk 做了 JSON 编码以保留换行；非 JSON 内容(如错误提示)原样使用
+            try { assistantContent += JSON.parse(data) } catch { assistantContent += data }
           }
         }
       }
@@ -165,7 +166,7 @@ async function sendMessage() {
         if (line.startsWith('data:')) {
           const data = line.substring(5)
           if (data.trim() === '[DONE]') continue
-          assistantContent += data
+          try { assistantContent += JSON.parse(data) } catch { assistantContent += data }
         }
       }
       messages.value[assistantMsgIndex].content = assistantContent
@@ -175,6 +176,7 @@ async function sendMessage() {
       messages.value[assistantMsgIndex].content = '暂无回复'
     }
   } catch (e: any) {
+    console.error('[AI Chat] 流式读取异常:', e)
     messages.value.push({ id: ++msgId, role: 'assistant', content: '抱歉，发生了错误，请稍后重试。' })
   } finally {
     loading.value = false
@@ -203,14 +205,14 @@ function scrollToBottom() {
   justify-content: center;
   color: #fff;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-600));
-  box-shadow: 0 14px 30px -12px rgba(37, 99, 235, 0.7);
+  box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--brand-600) 70%, transparent);
   cursor: pointer;
   z-index: 999;
   transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 .chat-toggle:hover {
   transform: translateY(-2px) scale(1.04);
-  box-shadow: 0 18px 34px -12px rgba(37, 99, 235, 0.8);
+  box-shadow: 0 18px 34px -12px color-mix(in srgb, var(--brand-600) 80%, transparent);
 }
 .chat-toggle.open {
   transform: scale(0.94);
@@ -222,7 +224,7 @@ function scrollToBottom() {
   position: absolute;
   inset: -5px;
   border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0 58%, rgba(37, 99, 235, 0.6) 76%, transparent 88%);
+  background: conic-gradient(from 0deg, transparent 0 58%, color-mix(in srgb, var(--brand-600) 60%, transparent) 76%, transparent 88%);
   animation: chat-spin 3.6s linear infinite;
   z-index: -1;
   pointer-events: none;
@@ -237,7 +239,7 @@ function scrollToBottom() {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(37, 99, 235, 0.45);
+  border: 2px solid color-mix(in srgb, var(--brand-600) 45%, transparent);
   animation: chat-pulse 2.8s ease-out infinite;
   pointer-events: none;
 }
@@ -289,13 +291,13 @@ function scrollToBottom() {
   height: 7px;
   border-radius: 50%;
   background: var(--brand-500);
-  box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-600) 50%, transparent);
   animation: hint-dot 1.8s ease-out infinite;
 }
 
 @keyframes hint-dot {
-  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.45); }
-  100% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-600) 45%, transparent); }
+  100% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--brand-600) 0%, transparent); }
 }
 
 .bubble-enter-active,
@@ -391,7 +393,7 @@ function scrollToBottom() {
   color: #fff;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-600));
   border-bottom-right-radius: 6px;
-  box-shadow: 0 10px 20px -14px rgba(37, 99, 235, 0.9);
+  box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--brand-600) 90%, transparent);
 }
 
 .message.assistant .message-content {
