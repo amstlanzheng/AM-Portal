@@ -176,7 +176,7 @@ function handleLogout() {
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand-600) 55%, transparent), transparent);
   background-size: 38% 100%;
   background-repeat: no-repeat;
   animation: header-scan 7s linear infinite;
@@ -226,7 +226,7 @@ function handleLogout() {
   position: absolute;
   inset: -3px;
   border-radius: 11px;
-  border: 1px solid rgba(37, 99, 235, 0.35);
+  border: 1px solid color-mix(in srgb, var(--brand-600) 35%, transparent);
   animation: mark-pulse 2.6s ease-out infinite;
   pointer-events: none;
 }
@@ -303,11 +303,11 @@ function handleLogout() {
 .btn-primary {
   color: #fff;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-600));
-  box-shadow: 0 8px 18px -10px rgba(37, 99, 235, 0.7);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--brand-600) 70%, transparent);
 }
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px -12px rgba(37, 99, 235, 0.8);
+  box-shadow: 0 12px 22px -12px color-mix(in srgb, var(--brand-600) 80%, transparent);
 }
 
 .user-chip {

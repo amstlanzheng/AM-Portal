@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
   left: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--brand-500), var(--brand-600));
-  box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand-600) 60%, transparent);
   z-index: 300;
   transition: width 0.12s linear;
 }
@@ -179,11 +179,11 @@ onBeforeUnmount(() => {
 .act-solid {
   color: #fff;
   background: linear-gradient(135deg, var(--brand-500), var(--brand-600));
-  box-shadow: 0 10px 20px -12px rgba(37, 99, 235, 0.8);
+  box-shadow: 0 10px 20px -12px color-mix(in srgb, var(--brand-600) 80%, transparent);
 }
 .act-solid:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 24px -14px rgba(37, 99, 235, 0.9);
+  box-shadow: 0 14px 24px -14px color-mix(in srgb, var(--brand-600) 90%, transparent);
 }
 
 .act-outline {

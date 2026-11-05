@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.minio.*;
 import io.minio.http.Method;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,19 @@ public class MinioService extends ServiceImpl<FileInfoMapper, FileInfo> {
 
     private final MinioClient minioClient;
     private final MinioConfig minioConfig;
+
+    /**
+     * 应用启动时确保 bucket 存在且已配置公开读策略，
+     * 使历史上传的文件 URL 立即可以访问
+     */
+    @PostConstruct
+    public void initBucket() {
+        try {
+            ensureBucket();
+        } catch (Exception e) {
+            log.warn("MinIO bucket 初始化失败: {}", e.getMessage());
+        }
+    }
 
     public FileInfo uploadFile(MultipartFile file, String directory, Long userId) {
         // 校验文件类型
@@ -56,11 +70,12 @@ public class MinioService extends ServiceImpl<FileInfoMapper, FileInfo> {
                     .build());
             inputStream.close();
 
-            // 获取访问 URL
+            // 获取访问 URL：优先使用对外地址（浏览器可访问），避免容器内网地址写入数据库
             String publicUrl = minioConfig.getPublicUrl();
             if (publicUrl == null || publicUrl.isBlank()) {
                 publicUrl = minioConfig.getEndpoint();
             }
+            publicUrl = publicUrl.replaceAll("/+$", "");
             String url = publicUrl + "/" + minioConfig.getBucketName() + "/" + objectName;
 
             // 保存文件信息到数据库
@@ -115,13 +130,37 @@ public class MinioService extends ServiceImpl<FileInfoMapper, FileInfo> {
     }
 
     private void ensureBucket() throws Exception {
+        String bucket = minioConfig.getBucketName();
         boolean exists = minioClient.bucketExists(BucketExistsArgs.builder()
-                .bucket(minioConfig.getBucketName())
+                .bucket(bucket)
                 .build());
         if (!exists) {
             minioClient.makeBucket(MakeBucketArgs.builder()
-                    .bucket(minioConfig.getBucketName())
+                    .bucket(bucket)
                     .build());
+        }
+        // 设置匿名只读策略：图片等文件需被浏览器直接访问，
+        // 否则私有 bucket 会返回 403 导致图片加载失败
+        try {
+            String policy = """
+                    {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Principal": {"AWS": ["*"]},
+                          "Action": ["s3:GetObject"],
+                          "Resource": ["arn:aws:s3:::%s/*"]
+                        }
+                      ]
+                    }
+                    """.formatted(bucket);
+            minioClient.setBucketPolicy(SetBucketPolicyArgs.builder()
+                    .bucket(bucket)
+                    .config(policy)
+                    .build());
+        } catch (Exception e) {
+            log.warn("设置 bucket 公开读策略失败，文件可能无法直接访问: {}", e.getMessage());
         }
     }
 

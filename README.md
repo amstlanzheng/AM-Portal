@@ -87,9 +87,10 @@ REDIS_PORT=6379
 REDIS_PASSWORD=your_redis_password
 
 MINIO_ENDPOINT=http://localhost:9000
+MINIO_PUBLIC_URL=http://localhost:9000
 MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET_NAME=am-portal
+MINIO_BUCKET_NAME=amst-ai
 
 DEEPSEEK_API_KEY=your_api_key
 ```
@@ -245,10 +246,14 @@ REDIS_PORT=6379
 REDIS_PASSWORD=<密码>
 
 # ---- 外部 MinIO ----
+# 后端连接地址（可为内网地址）
 MINIO_ENDPOINT=http://<MinIO 地址>:9000
+# 浏览器访问文件的对外地址，必须与线上域名一致（建议 HTTPS）
+MINIO_PUBLIC_URL=https://file.example.com
 MINIO_ACCESS_KEY=<AccessKey>
 MINIO_SECRET_KEY=<SecretKey>
-MINIO_BUCKET_NAME=am-portal
+# 需与现有文件所在 bucket 保持一致
+MINIO_BUCKET_NAME=amst-ai
 
 # ---- DeepSeek ----
 DEEPSEEK_API_KEY=<API Key>

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h2 style="margin-bottom:20px">用户管理</h2>
-    <el-table :data="users" border stripe>
+    <h2 class="admin-page-title" style="margin-bottom:20px">用户管理</h2>
+    <el-table :data="users">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="username" label="用户名" />
       <el-table-column prop="nickname" label="昵称" />

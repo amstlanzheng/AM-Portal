@@ -17,6 +17,7 @@ COPY project-auth/pom.xml project-auth/
 COPY project-user/pom.xml project-user/
 COPY project-blog/pom.xml project-blog/
 COPY project-project/pom.xml project-project/
+COPY project-system/pom.xml project-system/
 COPY project-ai/pom.xml project-ai/
 COPY project-storage/pom.xml project-storage/
 COPY project-api/pom.xml project-api/

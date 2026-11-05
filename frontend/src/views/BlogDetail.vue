@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
   left: 0;
   height: 2px;
   background: linear-gradient(90deg, var(--brand-500), var(--brand-600));
-  box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand-600) 60%, transparent);
   z-index: 300;
   transition: width 0.12s linear;
 }

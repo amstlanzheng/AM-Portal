@@ -1,10 +1,10 @@
 <template>
   <div>
     <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-      <h2>项目管理</h2>
+      <h2 class="admin-page-title">项目管理</h2>
       <el-button type="primary" @click="showDialog()">新增项目</el-button>
     </div>
-    <el-table :data="projects" border stripe>
+    <el-table :data="projects">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="名称" />
       <el-table-column prop="isTop" label="置顶" width="80"><template #default="{ row }"><el-tag :type="row.isTop ? 'danger' : 'info'">{{ row.isTop ? '是' : '否' }}</el-tag></template></el-table-column>
@@ -75,6 +75,12 @@ async function handleCoverUpload(file: File) {
 }
 
 async function handleSave() {
+  const invalid = [form.githubUrl, form.giteeUrl, form.demoUrl, form.downloadUrl]
+    .find(u => /^(https?:\/\/)?blob:/i.test((u || '').trim()))
+  if (invalid) {
+    ElMessage.error('blob: 开头的链接仅在当前浏览器会话有效，请填写文件的正式访问地址')
+    return
+  }
   if (editingProject.value) { await updateProject({ ...form, id: editingProject.value.id }) } else { await addProject(form) }
   ElMessage.success('保存成功'); dialogVisible.value = false; loadProjects()
 }

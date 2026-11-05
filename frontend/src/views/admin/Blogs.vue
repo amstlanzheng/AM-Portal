@@ -1,11 +1,17 @@
 <template>
   <div>
     <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-      <h2>博客管理</h2>
+      <h2 class="admin-page-title">博客管理</h2>
       <el-button type="primary" @click="showDialog()">新增博客</el-button>
     </div>
-    <el-table :data="blogs" border stripe>
+    <el-table :data="blogs">
       <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column label="封面" width="90">
+        <template #default="{ row }">
+          <el-image v-if="row.cover" :src="row.cover" style="width:64px;height:40px;border-radius:4px" fit="cover" :preview-src-list="[row.cover]" preview-teleported />
+          <span v-else style="color:var(--text-disabled);font-size:12px">无封面</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="title" label="标题" min-width="150" />
       <el-table-column prop="isPublished" label="发布" width="70">
         <template #default="{ row }"><el-tag :type="row.isPublished ? 'success' : 'warning'" size="small">{{ row.isPublished ? '已发布' : '草稿' }}</el-tag></template>
@@ -34,6 +40,15 @@
     <el-dialog v-model="dialogVisible" :title="editingBlog ? '编辑博客' : '新增博客'" width="700px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="标题"><el-input v-model="form.title" /></el-form-item>
+        <el-form-item label="封面">
+          <div style="display:flex;align-items:center;gap:12px">
+            <el-image v-if="form.cover" :src="form.cover" style="width:120px;height:80px;border-radius:4px" fit="cover" />
+            <el-upload :show-file-list="false" :before-upload="handleCoverUpload" accept="image/*">
+              <el-button>{{ form.cover ? '更换封面' : '上传封面' }}</el-button>
+            </el-upload>
+            <el-button v-if="form.cover" link type="danger" @click="form.cover = ''">移除</el-button>
+          </div>
+        </el-form-item>
         <el-form-item label="摘要"><el-input v-model="form.summary" type="textarea" :rows="2" /></el-form-item>
         <el-form-item label="分类"><el-input v-model="form.categoryId" placeholder="分类ID" /></el-form-item>
         <el-form-item label="Markdown"><el-input v-model="form.markdownContent" type="textarea" :rows="10" /></el-form-item>
@@ -45,12 +60,12 @@
 
     <!-- 敏感词检测结果弹窗 -->
     <el-dialog v-model="detectDialogVisible" title="敏感词检测结果" width="650px">
-      <div v-if="detectedWords.length === 0" style="text-align:center;padding:20px;color:#67c23a">
+      <div v-if="detectedWords.length === 0" style="text-align:center;padding:20px;color:var(--success)">
         <el-icon style="font-size:48px"><Check /></el-icon>
         <p style="margin-top:10px;font-size:16px">未检测到敏感词</p>
       </div>
       <div v-else>
-        <p style="margin-bottom:12px;color:#e6a23c">检测到 {{ detectedWords.length }} 个敏感词：</p>
+        <p style="margin-bottom:12px;color:var(--warning)">检测到 {{ detectedWords.length }} 个敏感词：</p>
         <div style="margin-bottom:16px">
           <el-tag v-for="w in detectedWords" :key="w" type="danger" style="margin:0 6px 6px 0">{{ w }}</el-tag>
         </div>
@@ -73,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { listAdminBlogs, addBlog, updateBlog, deleteBlog, reviewBlog, detectSensitiveWords } from '../../api'
+import { listAdminBlogs, addBlog, updateBlog, deleteBlog, reviewBlog, detectSensitiveWords, uploadFile } from '../../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check } from '@element-plus/icons-vue'
 
@@ -82,7 +97,7 @@ const page = ref(1)
 const total = ref(0)
 const dialogVisible = ref(false)
 const editingBlog = ref<any>(null)
-const form = reactive({ title: '', summary: '', categoryId: null as number | null, markdownContent: '', htmlContent: '', isPublished: false })
+const form = reactive({ title: '', cover: '', summary: '', categoryId: null as number | null, markdownContent: '', htmlContent: '', isPublished: false })
 
 const detectDialogVisible = ref(false)
 const detectedWords = ref<string[]>([])
@@ -113,6 +128,13 @@ function showDialog(blog?: any) {
   editingBlog.value = blog || null
   if (blog) { Object.assign(form, blog) } else { Object.keys(form).forEach(k => (form as any)[k] = k === 'isPublished' ? false : k === 'categoryId' ? null : '') }
   dialogVisible.value = true
+}
+
+async function handleCoverUpload(file: File) {
+  const res: any = await uploadFile(file, 'blog')
+  form.cover = res.data?.url || ''
+  ElMessage.success('封面上传成功')
+  return false
 }
 
 async function handleSave() {
@@ -158,7 +180,7 @@ function highlightText(text: string, words: string[]): string {
   for (const w of words) {
     const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const regex = new RegExp(escaped, 'gi')
-    result = result.replace(regex, '<span style="background:#f56c6c;color:#fff;padding:0 4px;border-radius:3px">$&</span>')
+    result = result.replace(regex, '<span style="background:var(--danger);color:#fff;padding:0 4px;border-radius:3px">$&</span>')
   }
   return result.replace(/\n/g, '<br/>')
 }

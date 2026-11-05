@@ -412,7 +412,7 @@ onBeforeUnmount(() => {
   height: 520px;
   margin: -260px 0 0 -260px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(37, 99, 235, 0.16), rgba(37, 99, 235, 0.05) 55%, transparent 72%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--brand-600) 16%, transparent), color-mix(in srgb, var(--brand-600) 5%, transparent) 55%, transparent 72%);
   transition: left 0.35s ease-out, top 0.35s ease-out, opacity 0.4s ease;
   pointer-events: none;
 }
@@ -722,7 +722,7 @@ onBeforeUnmount(() => {
 /* 时钟卡 */
 .clock-card {
   background:
-    linear-gradient(150deg, rgba(37, 99, 235, 0.07), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(150deg, color-mix(in srgb, var(--brand-600) 7%, transparent), rgba(255, 255, 255, 0) 55%),
     var(--surface);
 }
 

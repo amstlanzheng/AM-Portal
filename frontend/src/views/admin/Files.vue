@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 style="margin-bottom:20px">文件管理</h2>
+    <h2 class="admin-page-title" style="margin-bottom:20px">文件管理</h2>
     <div style="margin-bottom:16px;display:flex;gap:12px;align-items:center">
       <el-upload :show-file-list="false" :before-upload="handleUpload" accept="image/*"><el-button type="primary">上传文件</el-button></el-upload>
       <el-button type="danger" :disabled="!selectedIds.length" @click="handleBatchDelete">批量删除{{ selectedIds.length ? `(${selectedIds.length})` : '' }}</el-button>
@@ -9,7 +9,7 @@
         <el-option label="头像" value="avatar" /><el-option label="项目" value="project" /><el-option label="博客" value="blog" /><el-option label="其他" value="other" />
       </el-select>
     </div>
-    <el-table :data="files" border stripe @selection-change="handleSelectionChange">
+    <el-table :data="files" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="50" />
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="originalName" label="文件名" show-overflow-tooltip />

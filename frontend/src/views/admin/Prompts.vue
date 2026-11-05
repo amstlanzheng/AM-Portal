@@ -1,10 +1,10 @@
 <template>
   <div>
     <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-      <h2>Prompt 管理</h2>
+      <h2 class="admin-page-title">Prompt 管理</h2>
       <el-button type="primary" @click="showDialog()">新增 Prompt</el-button>
     </div>
-    <el-table :data="prompts" border stripe>
+    <el-table :data="prompts">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="名称" />
       <el-table-column prop="content" label="内容" show-overflow-tooltip />

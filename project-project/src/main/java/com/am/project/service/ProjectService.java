@@ -98,7 +98,10 @@ public class ProjectService extends ServiceImpl<ProjectMapper, Project> {
             return null;
         }
         String trimmed = url.trim();
-        if (trimmed.matches("(?i)^(https?|mailto|tel):.*")) {
+        // 兼容历史错误数据：曾被错误补全为 https://blob:https://... 的地址
+        trimmed = trimmed.replaceFirst("(?i)^https?://(blob:)", "$1");
+        // 已带协议头（http/https/ftp/blob/data/mailto/tel 等）的地址原样返回，避免二次拼接
+        if (trimmed.matches("(?i)^(https?|ftp|ftps|blob|data|mailto|tel):.*")) {
             return trimmed;
         }
         return "https://" + trimmed;

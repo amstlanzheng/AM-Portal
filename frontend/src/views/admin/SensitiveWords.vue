@@ -1,7 +1,7 @@
 <template>
   <div>
     <div style="display:flex;justify-content:space-between;margin-bottom:20px">
-      <h2>敏感词管理</h2>
+      <h2 class="admin-page-title">敏感词管理</h2>
       <div>
         <el-button type="primary" @click="showAddDialog">新增敏感词</el-button>
         <el-button @click="showBatchDialog">批量导入</el-button>
@@ -20,7 +20,7 @@
       <el-button type="primary" @click="loadWords">查询</el-button>
     </div>
 
-    <el-table :data="words" border stripe>
+    <el-table :data="words">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="word" label="敏感词" />
       <el-table-column prop="category" label="分类" width="120" />
