@@ -39,5 +39,5 @@ spring-ai:
   sql:
     init:
       mode: always
-      schema-locations: classpath:db/migration-sensitive-word.sql
+      schema-locations: classpath:db/migration-sensitive-word.sql,classpath:db/migration-quiz.sql
       continue-on-error: true

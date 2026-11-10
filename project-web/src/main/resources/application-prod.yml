@@ -26,7 +26,7 @@ spring:
   sql:
     init:
       mode: always
-      schema-locations: classpath:db/migration-sensitive-word.sql,classpath:db/migration-daily-tip.sql,classpath:db/migration-user-theme.sql
+      schema-locations: classpath:db/migration-sensitive-word.sql,classpath:db/migration-daily-tip.sql,classpath:db/migration-user-theme.sql,classpath:db/migration-quiz.sql
       continue-on-error: true
 
 mybatis-plus:

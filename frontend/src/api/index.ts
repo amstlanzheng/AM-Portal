@@ -57,6 +57,18 @@ export const listTips = () => request.get('/admin/tips')
 export const addTip = (content: string) => request.post('/admin/tips', { content })
 export const deleteTip = (id: number) => request.delete(`/admin/tips/${id}`)
 
+// MBTI 测试
+export const getQuizQuestions = () => request.get('/home/quiz/questions')
+export const getQuizResultTypes = () => request.get('/home/quiz/result-types')
+export const listQuizQuestions = () => request.get('/admin/quiz/questions')
+export const addQuizQuestion = (data: any) => request.post('/admin/quiz/questions', data)
+export const updateQuizQuestion = (data: any) => request.put('/admin/quiz/questions', data)
+export const deleteQuizQuestion = (id: number) => request.delete(`/admin/quiz/questions/${id}`)
+export const listQuizResultTypes = () => request.get('/admin/quiz/result-types')
+export const addQuizResultType = (data: any) => request.post('/admin/quiz/result-types', data)
+export const updateQuizResultType = (data: any) => request.put('/admin/quiz/result-types', data)
+export const deleteQuizResultType = (id: number) => request.delete(`/admin/quiz/result-types/${id}`)
+
 // 敏感词
 export const listSensitiveWords = (params: any) => request.get('/admin/sensitive-words', { params })
 export const addSensitiveWord = (data: any) => request.post('/admin/sensitive-words', data)

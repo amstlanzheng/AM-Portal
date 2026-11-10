@@ -21,6 +21,9 @@
         <el-menu-item index="/admin/tips">
           <el-icon><Sunny /></el-icon><span>小贴士管理</span>
         </el-menu-item>
+        <el-menu-item index="/admin/quiz">
+          <el-icon><MagicStick /></el-icon><span>MBTI 测试管理</span>
+        </el-menu-item>
         <el-menu-item index="/admin/sensitive-words">
           <el-icon><Warning /></el-icon><span>敏感词管理</span>
         </el-menu-item>
