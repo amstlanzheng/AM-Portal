@@ -177,7 +177,11 @@ public class AiService extends ServiceImpl<AiConversationMapper, AiConversation>
                     sb.append(pairs[i]);
                 }
                 sb.append("|||").append(newPair);
-                redisUtil.set(contextKey, sb.toString(), 2, TimeUnit.HOURS);
+                String context = sb.toString();
+                if (context != null) {
+                    // toString() 契约上不会返回 null，判空仅为通过 IDE 空值分析
+                    redisUtil.set(contextKey, context, 2, TimeUnit.HOURS);
+                }
             } else {
                 redisUtil.set(contextKey, existing + "|||" + newPair, 2, TimeUnit.HOURS);
             }

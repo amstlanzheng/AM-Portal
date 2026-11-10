@@ -49,7 +49,9 @@ public class AiController {
                             if (!content.isEmpty()) {
                                 try {
                                     // JSON 编码：转义内容中的换行等控制字符，避免破坏 SSE 的 data 行格式
-                                    emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(content)));
+                                    String payload = objectMapper.writeValueAsString(content);
+                                    // writeValueAsString 契约上不会返回 null，判空仅为通过 IDE 空值分析
+                                    emitter.send(SseEmitter.event().data(payload != null ? payload : ""));
                                     log.debug("SSE 发送 chunk: {}", content);
                                 } catch (Exception e) {
                                     log.error("SSE 发送失败", e);

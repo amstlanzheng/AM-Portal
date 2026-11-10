@@ -29,8 +29,11 @@ public class SysConfigService extends ServiceImpl<SysConfigMapper, SysConfig> {
         }
         SysConfig config = getOne(new LambdaQueryWrapper<SysConfig>().eq(SysConfig::getConfigKey, key));
         if (config != null) {
-            redisUtil.set(cacheKey, config.getConfigValue(), 1, TimeUnit.HOURS);
-            return config.getConfigValue();
+            String configValue = config.getConfigValue();
+            if (configValue != null) {
+                redisUtil.set(cacheKey, configValue, 1, TimeUnit.HOURS);
+            }
+            return configValue;
         }
         return null;
     }
@@ -48,7 +51,9 @@ public class SysConfigService extends ServiceImpl<SysConfigMapper, SysConfig> {
         }
         // 刷新缓存
         String cacheKey = CommonConstant.REDIS_CONFIG_PREFIX + key;
-        redisUtil.set(cacheKey, value, 1, TimeUnit.HOURS);
+        if (value != null) {
+            redisUtil.set(cacheKey, value, 1, TimeUnit.HOURS);
+        }
     }
 
     public Map<String, String> getAllConfigs() {
