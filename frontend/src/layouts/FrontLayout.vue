@@ -1,5 +1,7 @@
 <template>
-  <div class="front-layout">
+  <div class="front-layout" :data-wb-theme="wbTheme">
+    <!-- Nimbus 风格动态天气背景（纯装饰层，不拦截交互） -->
+    <WeatherBackground />
     <header class="site-header">
       <div class="header-inner">
         <div class="brand" @click="$router.push('/')">
@@ -78,6 +80,9 @@
 
     <!-- AI 聊天窗口 -->
     <AiChat />
+
+    <!-- 天气角标与切换面板 -->
+    <WeatherBadge />
   </div>
 </template>
 
@@ -87,16 +92,22 @@ import { useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { getHomePage } from '../api'
 import AiChat from '../components/AiChat.vue'
+import WeatherBackground from '../components/weather/WeatherBackground.vue'
+import WeatherBadge from '../components/weather/WeatherBadge.vue'
+import { useWeather } from '../composables/useWeather'
 
 const route = useRoute()
 const userStore = useUserStore()
+const { wbTheme } = useWeather()
 const siteInfo = ref<any>({})
 const year = new Date().getFullYear()
 
 const navItems = [
   { path: '/', label: '首页' },
   { path: '/projects', label: '项目' },
-  { path: '/blogs', label: '博客' }
+  { path: '/blogs', label: '博客' },
+  { path: '/tools', label: '工具' },
+  { path: '/fun', label: '趣味' }
 ]
 
 const userInitial = computed(() => (userStore.username || '?').slice(0, 1).toUpperCase())
@@ -339,12 +350,74 @@ function handleLogout() {
 /* ---------- 内容区 ---------- */
 .site-main {
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- 页脚 ---------- */
 .site-footer {
+  position: relative;
+  z-index: 1;
   border-top: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.6);
+}
+
+/* ---------- 天气暗主题（夜晚/雨夜）：文字与表面自适应 ----------
+   白色前景/深色半透明覆层沿用项目功能性配色惯例（同 #fff 白前景）；
+   卡片表面经 --surface 作用域覆写实现玻璃拟态（≥72% 白底保证正文可读） */
+.front-layout[data-wb-theme='dark'] {
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-muted: rgba(255, 255, 255, 0.58);
+}
+
+.front-layout[data-wb-theme='dark'] .site-header {
+  background: rgba(15, 23, 42, 0.5);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.front-layout[data-wb-theme='dark'] .brand-text {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.front-layout[data-wb-theme='dark'] .nav-item {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.front-layout[data-wb-theme='dark'] .nav-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.front-layout[data-wb-theme='dark'] .nav-item.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.front-layout[data-wb-theme='dark'] .btn-ghost {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.front-layout[data-wb-theme='dark'] .btn-ghost:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.front-layout[data-wb-theme='dark'] .user-chip {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.front-layout[data-wb-theme='dark'] .user-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.front-layout[data-wb-theme='dark'] .site-footer {
+  background: rgba(15, 23, 42, 0.45);
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.front-layout[data-wb-theme='dark'] .footer-inner {
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .footer-inner {
