@@ -1,7 +1,8 @@
 import type { Component } from 'vue'
 import {
   TrendCharts, Picture, Switch, Document, EditPen, Key, Brush, Clock,
-  Memo, Lightning, MagicStick, Pointer
+  Memo, Lightning, MagicStick, Pointer, Files, Link, Collection, Lock,
+  Grid, Tickets
 } from '@element-plus/icons-vue'
 
 export interface ToolMeta {
@@ -61,6 +62,42 @@ export const utilityTools: ToolMeta[] = [
     desc: '时间戳和日期互相转换，支持多时区显示和常用格式输出',
     intro: '时间戳和日期互相转换，支持多时区显示和常用格式输出。',
     usage: '输入时间戳或选日期 → 选时区 → 查看结果 → 复制'
+  },
+  {
+    name: 'base64', title: 'Base64 编解码', icon: Files,
+    desc: '文本与 Base64 双向转换，完整支持中文等 UTF-8 内容',
+    intro: '文本与 Base64 双向转换，完整支持中文等 UTF-8 字符，非法 Base64 会给出明确错误提示。',
+    usage: '粘贴内容 → 选编码/解码 → 复制结果'
+  },
+  {
+    name: 'url-encode', title: 'URL 编解码', icon: Link,
+    desc: '组件模式与整 URL 模式两种百分号编解码',
+    intro: 'URL 百分号编解码：组件模式转义 & = ? 等保留字符，整 URL 模式保留链接结构，按需选择。',
+    usage: '选模式 → 输入内容 → 编码/解码 → 复制'
+  },
+  {
+    name: 'html-entity', title: 'HTML 实体转义', icon: Collection,
+    desc: '尖括号、引号、& 与 HTML 实体双向转换',
+    intro: 'HTML 特殊字符与实体（&lt; &gt; &amp; &quot; 等）双向转换，发代码片段到网页前的必备步骤。',
+    usage: '输入文本 → 选转义/还原 → 复制结果'
+  },
+  {
+    name: 'hash', title: '哈希工具', icon: Lock,
+    desc: '输入文本即时计算 MD5、SHA-1、SHA-256 等五种摘要',
+    intro: '输入文本即时计算 MD5、SHA-1、SHA-256、SHA-384、SHA-512 五种摘要，随打随算，逐项复制。',
+    usage: '输入文本 → 自动出结果 → 逐项复制'
+  },
+  {
+    name: 'uuid', title: 'UUID 生成器', icon: Grid,
+    desc: '批量生成 UUID v4，支持大小写与连字符格式',
+    intro: '批量生成随机的 UUID v4（最多 50 个），可选大小写与是否带连字符，单个或全部复制。',
+    usage: '选数量与格式 → 生成 → 复制'
+  },
+  {
+    name: 'unicode', title: 'Unicode 编解码', icon: Tickets,
+    desc: '中文等字符与 \\uXXXX 转义序列双向转换',
+    intro: '文本与 \\uXXXX 转义序列双向转换，编码时 ASCII 字符保留原样，常见于配置文件与国际化资源处理。',
+    usage: '输入文本 → 选编码/解码 → 复制结果'
   }
 ]
 
